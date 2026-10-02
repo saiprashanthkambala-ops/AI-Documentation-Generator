@@ -7,7 +7,8 @@ A FastAPI application that safely ingests a project ZIP, builds a deterministic 
 - SHA-256 file manifest and Python AST evidence without executing source.
 - Server-side Gemini integration with bounded retries and controlled provider errors.
 - SQLite persistence for projects and documentation history.
-- Markdown viewer, download, project history, and health/provider status endpoints.
+- Markdown viewer, Markdown/PDF/JPG downloads, project history, and health/provider status endpoints.
+- PDF export creates a multi-page document; JPG export creates one high-resolution long image from the same generated Markdown.
 
 ## Setup
 Python 3.10+ is recommended.
@@ -62,7 +63,7 @@ Check:
 A configured installation reports the provider, model, and `Ready` status without exposing the API key.
 
 ## API
-`POST /api/upload`, `POST /api/projects/{id}/generate?doc_type=README`, `GET /api/projects`, `GET /api/projects/{id}`, `GET /api/projects/{id}/download`, `GET /api/projects/{id}/versions`, `GET /api/projects/{id}/documentation-versions`, `GET /api/projects/{id}/changes`, `GET /api/projects/{id}/change-reports`, `POST /api/projects/{id}/maintenance`, `GET /api/projects/{id}/documentation-diff/{version_id}`, `POST /api/projects/{id}/documentation/{version_id}/decision`, `GET /api/gemini/status`, and `GET /api/health`.
+`POST /api/upload`, `POST /api/projects/{id}/generate?doc_type=README`, `GET /api/projects`, `GET /api/projects/{id}`, `GET /api/projects/{id}/download`, `GET /api/projects/{id}/download/pdf`, `GET /api/projects/{id}/download/jpg`, `GET /api/projects/{id}/versions`, `GET /api/projects/{id}/documentation-versions`, `GET /api/projects/{id}/changes`, `GET /api/projects/{id}/change-reports`, `POST /api/projects/{id}/maintenance`, `GET /api/projects/{id}/documentation-diff/{version_id}`, `POST /api/projects/{id}/documentation/{version_id}/decision`, `GET /api/gemini/status`, and `GET /api/health`.
 
 ## Testing
 

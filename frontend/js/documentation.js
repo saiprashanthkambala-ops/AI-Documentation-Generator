@@ -10,7 +10,8 @@ document.addEventListener("DOMContentLoaded", () => {
     currentProjectId = getQueryParam("id");
     if (currentProjectId) loadDocumentation(currentProjectId);
 
-    document.getElementById("downloadBtn")?.addEventListener("click", downloadDoc);
+    document.getElementById("downloadPdfBtn")?.addEventListener("click", () => downloadDoc("pdf", "downloadPdfBtn"));
+    document.getElementById("downloadJpgBtn")?.addEventListener("click", () => downloadDoc("jpg", "downloadJpgBtn"));
     document.getElementById("regenerateBtn")?.addEventListener("click", regenerateDoc);
     document.getElementById("copyBtn")?.addEventListener("click", copyDoc);
 });
@@ -91,23 +92,46 @@ async function generateNow(projectId) {
     }
 }
 
-async function downloadDoc() {
+async function downloadDoc(format, buttonId) {
     if (!currentProjectId) return;
+
+    const button = document.getElementById(buttonId);
+    const originalHtml = button?.innerHTML;
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Exporting...';
+    }
+
     try {
-        const res = await fetch(`/api/projects/${currentProjectId}/download`);
-        if (!res.ok) throw new Error("Download failed");
+        const res = await fetch(`/api/projects/${currentProjectId}/download/${format}`);
+        if (!res.ok) {
+            let message = "Export failed";
+            try {
+                const payload = await res.json();
+                message = payload.detail || message;
+            } catch (_) {}
+            throw new Error(message);
+        }
+
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
         const disp = res.headers.get("Content-Disposition") || "";
-        const match = disp.match(/filename="(.+)"/);
-        a.download = match ? match[1] : "README.md";
+        const match = disp.match(/filename="([^"]+)"/i);
+        a.download = match ? match[1] : `documentation.${format}`;
+        document.body.appendChild(a);
         a.click();
+        a.remove();
         URL.revokeObjectURL(url);
-        showToast("Download started");
+        showToast(`Download ${format.toUpperCase()} started`);
     } catch (err) {
         showToast(err.message, "error");
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = originalHtml;
+        }
     }
 }
 
