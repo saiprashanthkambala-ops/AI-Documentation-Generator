@@ -235,3 +235,21 @@ def test_ui_precision_contract():
     assert "signal: controller.signal" in upload
     assert 'background-image:' in style
     assert "body[data-theme=\"light\"] .card" in style
+
+
+def test_profile_ui_uses_single_unified_card():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    profile = (root / "frontend" / "profile.html").read_text(encoding="utf-8")
+
+    assert 'class="card profile-card"' in profile
+    assert 'class="profile-card-header"' in profile
+    assert '<section class="hero profile-hero">' not in profile
+
+
+def test_upload_limits_are_200_mb():
+    from backend.config import settings
+
+    assert settings.MAX_ZIP_SIZE_MB == 200
+    assert settings.MAX_EXTRACTED_SIZE_MB == 200
