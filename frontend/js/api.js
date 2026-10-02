@@ -3,6 +3,7 @@
  */
 
 const API_BASE = "";
+let activeLoadingCancel = null;
 
 async function parseJsonResponse(response) {
     const text = await response.text();
@@ -41,26 +42,49 @@ async function apiRequest(url, options = {}) {
     return parseJsonResponse(response);
 }
 
-function showLoading(message = "Please wait...") {
+function showLoading(message = "Please wait...", options = {}) {
+    hideLoading();
+    activeLoadingCancel = typeof options.onCancel === "function" ? options.onCancel : null;
+
     const el = document.createElement("div");
     el.className = "loading-overlay";
     el.id = "loadingOverlay";
-    el.innerHTML = `
-        <div class="loading-box">
-            <div class="spinner-border text-primary mb-3"></div>
-            <p class="fw-semibold mb-1">${message}</p>
-            <small class="text-muted">Gemini may take a moment to respond</small>
-        </div>`;
+    el.innerHTML =
+        '<div class="loading-box loading-dialog">' +
+            '<button type="button" class="loading-close" id="loadingCancelBtn" aria-label="Stop current operation" title="Stop">' +
+                '<i class="bi bi-x-lg" aria-hidden="true"></i>' +
+            '</button>' +
+            '<div class="spinner-border text-primary mb-3"></div>' +
+            '<p class="fw-semibold mb-1">' + message + '</p>' +
+            '<small class="text-muted">Gemini may take a moment to respond</small>' +
+            '<div class="loading-cancel-note">You can stop this operation at any time.</div>' +
+        '</div>';
     document.body.appendChild(el);
+
+    document.getElementById("loadingCancelBtn")?.addEventListener("click", cancelLoading);
+}
+
+function cancelLoading() {
+    const cancel = activeLoadingCancel;
+    activeLoadingCancel = null;
+    if (typeof cancel === "function") {
+        try { cancel(); } catch (_) {}
+    }
+    hideLoading();
 }
 
 function hideLoading() {
+    activeLoadingCancel = null;
     document.getElementById("loadingOverlay")?.remove();
 }
 
 function showToast(message, type = "success") {
     let c = document.querySelector(".toast-container");
-    if (!c) { c = document.createElement("div"); c.className = "toast-container"; document.body.appendChild(c); }
+    if (!c) {
+        c = document.createElement("div");
+        c.className = "toast-container";
+        document.body.appendChild(c);
+    }
     const bg = type === "error" ? "bg-danger" : "bg-success";
     const t = document.createElement("div");
     t.className = `toast align-items-center text-white ${bg} border-0 show`;
@@ -90,7 +114,7 @@ async function checkGeminiStatus() {
             <small>${s.configured ? 'Gemini Ready' : 'Gemini Offline'}</small>`;
         el.title = s.message;
     } catch (e) {
-        el.innerHTML = `<span class="status-dot offline"></span><small>Gemini Offline</small>`;
+        el.innerHTML = '<span class="status-dot offline"></span><small>Gemini Offline</small>';
     }
 }
 
