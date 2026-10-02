@@ -10,7 +10,7 @@ import difflib
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, Query
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, Response
 from sqlalchemy.orm import Session
 
 from backend.config import settings
@@ -27,6 +27,7 @@ from backend.schemas.schemas import (
 from backend.services.doc_generator import generate_documentation
 from backend.services.zip_handler import extract_zip, validate_zip
 from backend.services.gemini_service import ProviderError, status as gemini_status
+from backend.services.document_exporter import ExportError, markdown_to_jpg, markdown_to_pdf
 
 router = APIRouter(prefix="/api", tags=["Projects"])
 
@@ -241,28 +242,67 @@ def get_project(project_id: int, db: Session = Depends(get_db)):
     return project
 
 
-# ---------- Download ----------
+# ---------- Download / Export ----------
 
-@router.get("/projects/{project_id}/download")
-def download_documentation(project_id: int, db: Session = Depends(get_db)):
-    """
-    Module 5: Download generated documentation as README.md.
-    """
+def _project_for_download(project_id: int, db: Session) -> Project:
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-
     if not project.generated_documentation:
         raise HTTPException(status_code=400, detail="No documentation generated yet.")
+    return project
 
-    safe_name = "".join(
+
+def _safe_project_name(project: Project) -> str:
+    return "".join(
         c if c.isalnum() or c in ("-", "_") else "_" for c in project.name
     )
-    filename = f"{safe_name}_README.md"
 
+
+@router.get("/projects/{project_id}/download")
+def download_documentation(project_id: int, db: Session = Depends(get_db)):
+    """Download the generated source Markdown."""
+    project = _project_for_download(project_id, db)
+    filename = f"{_safe_project_name(project)}_README.md"
     return PlainTextResponse(
         content=project.generated_documentation,
         media_type="text/markdown",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/projects/{project_id}/download/pdf")
+def download_documentation_pdf(project_id: int, db: Session = Depends(get_db)):
+    """Render the generated Markdown as a professional multi-page PDF."""
+    project = _project_for_download(project_id, db)
+    try:
+        payload = markdown_to_pdf(project.generated_documentation, project.name)
+    except ExportError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    except Exception:
+        raise HTTPException(status_code=500, detail="PDF export failed safely.")
+    filename = f"{_safe_project_name(project)}_Documentation.pdf"
+    return Response(
+        content=payload,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/projects/{project_id}/download/jpg")
+def download_documentation_jpg(project_id: int, db: Session = Depends(get_db)):
+    """Render the generated Markdown as one high-resolution long JPG image."""
+    project = _project_for_download(project_id, db)
+    try:
+        payload = markdown_to_jpg(project.generated_documentation, project.name)
+    except ExportError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    except Exception:
+        raise HTTPException(status_code=500, detail="JPG export failed safely.")
+    filename = f"{_safe_project_name(project)}_Documentation.jpg"
+    return Response(
+        content=payload,
+        media_type="image/jpeg",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
