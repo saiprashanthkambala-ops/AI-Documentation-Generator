@@ -19,3 +19,60 @@ class DocumentationVersion(Base):
     __tablename__='documentation_versions'
     id=Column(Integer, primary_key=True); project_id=Column(Integer, ForeignKey('projects.id'), nullable=False); project_version_id=Column(Integer, ForeignKey('project_versions.id')); doc_type=Column(String(80), default='README'); content=Column(Text, nullable=False); status=Column(String(40), default='CURRENT'); created_at=Column(DateTime, default=datetime.utcnow)
     project=relationship('Project', back_populates='documentation_versions')
+
+
+class DocumentationRevision(Base):
+    __tablename__ = "documentation_revisions"
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    version_number = Column(Integer, nullable=False)
+    parent_revision_id = Column(Integer, nullable=True)
+    content = Column(Text, nullable=False)
+    operation = Column(String(40), default="GENERATE")
+    change_summary = Column(Text, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    project = relationship("Project", back_populates="documentation_revisions")
+
+
+class DocumentationSession(Base):
+    __tablename__ = "documentation_sessions"
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, unique=True)
+    current_revision_id = Column(Integer, nullable=True)
+    undo_stack = Column(Text, default="[]")
+    redo_stack = Column(Text, default="[]")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+    project = relationship("Project", back_populates="documentation_session")
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    revision_id = Column(Integer, nullable=True)
+    role = Column(String(20), nullable=False)
+    content = Column(Text, nullable=False)
+    proposal_json = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    project = relationship("Project", back_populates="chat_messages")
+
+
+Project.documentation_revisions = relationship(
+    "DocumentationRevision",
+    back_populates="project",
+    cascade="all, delete-orphan",
+    order_by="DocumentationRevision.created_at",
+)
+Project.documentation_session = relationship(
+    "DocumentationSession",
+    back_populates="project",
+    uselist=False,
+    cascade="all, delete-orphan",
+)
+Project.chat_messages = relationship(
+    "ChatMessage",
+    back_populates="project",
+    cascade="all, delete-orphan",
+    order_by="ChatMessage.created_at",
+)

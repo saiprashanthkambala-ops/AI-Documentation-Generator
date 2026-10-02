@@ -43,7 +43,7 @@ function showLoading(message = "Please wait...") {
         <div class="loading-box">
             <div class="spinner-border text-primary mb-3"></div>
             <p class="fw-semibold mb-1">${message}</p>
-            <small class="text-muted">Local AI may take 1-3 minutes</small>
+            <small class="text-muted">Gemini may take a moment to respond</small>
         </div>`;
     document.body.appendChild(el);
 }
