@@ -26,7 +26,7 @@ from backend.schemas.schemas import (
 )
 from backend.services.doc_generator import generate_documentation
 from backend.services.zip_handler import extract_zip, validate_zip
-from backend.services.gemini_service import ProviderError, status as gemini_status
+from backend.services.gemini_service import ProviderError, status as gemini_status, test_connection as gemini_test_connection
 from backend.services.document_exporter import ExportError, markdown_to_jpg, markdown_to_pdf
 from backend.services.revision_service import create_revision, current_revision
 
@@ -36,6 +36,23 @@ router = APIRouter(prefix="/api", tags=["Projects"])
 @router.get("/gemini/status")
 async def gemini_status_route():
     return await gemini_status()
+
+
+@router.post("/gemini/test")
+async def gemini_test_route():
+    """Run a tiny real Gemini generateContent request to test the live pipeline."""
+    try:
+        return await gemini_test_connection()
+    except ProviderError as exc:
+        raise HTTPException(
+            status_code=503 if exc.code in {"AI_TRANSIENT_ERROR", "AI_PROVIDER_UNAVAILABLE"} else 502,
+            detail={
+                "code": exc.code,
+                "message": exc.message,
+                "status_code": exc.status_code,
+                "model": exc.model,
+            },
+        )
 
 
 # ---------- Upload ZIP ----------
@@ -215,7 +232,15 @@ async def generate_docs(project_id: int, doc_type: str = Query('README'), db: Se
         raise HTTPException(status_code=504, detail=str(e))
     except ProviderError as e:
         project.status = "failed"; [setattr(d,'status','FAILED') for d in prior_docs]; db.commit()
-        raise HTTPException(status_code=503, detail={"code":e.code,"message":e.message})
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "code": e.code,
+                "message": e.message,
+                "status_code": e.status_code,
+                "model": e.model,
+            },
+        )
     except Exception:
         project.status = "failed"; db.commit()
         raise HTTPException(status_code=500, detail="Generation failed safely. Please try again.")
