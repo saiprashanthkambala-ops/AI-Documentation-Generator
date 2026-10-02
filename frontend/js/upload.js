@@ -37,7 +37,7 @@ function selectFile(file) {
         return;
     }
     if (file.size > MAX_ZIP_SIZE_BYTES) {
-        showToast("ZIP file exceeds the 200 MB upload limit.", "error");
+        showToast("ZIP exceeds 200MB limit", "error");
         selectedZipFile = null;
         document.getElementById("selectedFile").classList.add("d-none");
         return;
