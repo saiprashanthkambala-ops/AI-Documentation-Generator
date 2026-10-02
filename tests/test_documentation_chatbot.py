@@ -80,3 +80,35 @@ def test_revision_undo_redo_persists():
     assert current_revision(project, db).content == "# V3"
 
     db.close()
+
+
+
+def test_rewrite_document_supports_broad_transformation():
+    original = "# Crime Analysis\n\n## Overview\n\nA concise description."
+    updated, change = apply_proposal(
+        original,
+        {
+            "operation": "REWRITE_DOCUMENT",
+            "target": "",
+            "replacement": "# Crime Analysis\n\n## Overview\n\nA more detailed, human-readable description based on the supplied evidence.\n",
+        },
+    )
+    assert updated.startswith("# Crime Analysis")
+    assert "more detailed" in updated
+    assert change["operation"] == "REWRITE_DOCUMENT"
+
+
+def test_rewrite_document_rejects_non_markdown():
+    try:
+        apply_proposal(
+            "# Doc",
+            {
+                "operation": "REWRITE_DOCUMENT",
+                "target": "",
+                "replacement": "plain text only",
+            },
+        )
+    except ValueError as exc:
+        assert "Markdown with a heading" in str(exc)
+    else:
+        raise AssertionError("Expected invalid full-document proposal to be rejected")
