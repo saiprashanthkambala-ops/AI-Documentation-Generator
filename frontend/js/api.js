@@ -49,15 +49,24 @@ function showLoading(message = "Please wait...", options = {}) {
     const el = document.createElement("div");
     el.className = "loading-overlay";
     el.id = "loadingOverlay";
+
+    const closeButton = activeLoadingCancel
+        ? '<button type="button" class="loading-close" id="loadingCancelBtn" aria-label="Stop current operation" title="Stop">' +
+              '<i class="bi bi-x-lg" aria-hidden="true"></i>' +
+          '</button>'
+        : "";
+
+    const cancelNote = activeLoadingCancel
+        ? '<div class="loading-cancel-note">You can stop this operation at any time.</div>'
+        : "";
+
     el.innerHTML =
         '<div class="loading-box loading-dialog">' +
-            '<button type="button" class="loading-close" id="loadingCancelBtn" aria-label="Stop current operation" title="Stop">' +
-                '<i class="bi bi-x-lg" aria-hidden="true"></i>' +
-            '</button>' +
+            closeButton +
             '<div class="spinner-border text-primary mb-3"></div>' +
             '<p class="fw-semibold mb-1">' + message + '</p>' +
             '<small class="text-muted">Gemini may take a moment to respond</small>' +
-            '<div class="loading-cancel-note">You can stop this operation at any time.</div>' +
+            cancelNote +
         '</div>';
     document.body.appendChild(el);
 
