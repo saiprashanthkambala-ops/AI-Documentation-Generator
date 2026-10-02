@@ -202,3 +202,16 @@ def test_ui_contract_has_cancellable_generation_and_chat_thinking_state():
     assert "chatThinking" in documentation
     assert "loadingCancelBtn" in api
     assert "Generated Files" in page
+
+
+def test_ui_contract_supports_upload_cancellation_and_equal_home_cards():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    upload = (root / "frontend" / "js" / "upload.js").read_text(encoding="utf-8")
+    style = (root / "frontend" / "css" / "style.css").read_text(encoding="utf-8")
+
+    assert "AbortController" in upload
+    assert "controller.abort()" in upload
+    assert "step-card-row" in style
+    assert "grid-template-columns: repeat(3" in style
