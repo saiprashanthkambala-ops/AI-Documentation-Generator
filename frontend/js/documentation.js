@@ -81,7 +81,7 @@ function applyDocumentTheme(markdown) {
         code_bg: "#101827",
         code_text: "#e2e8f0"
     };
-    const match = String(markdown || "").match(/^\\s*<!--\\s*DOC_THEME:\\s*(\\{.*\\})\\s*-->\\s*$/m);
+    const match = String(markdown || "").match(/^\s*<!--\s*DOC_THEME:\s*(\{.*\})\s*-->\s*$/m);
     let theme = defaults;
     if (match) {
         try {
