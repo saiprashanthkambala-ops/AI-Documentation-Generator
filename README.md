@@ -9,6 +9,7 @@ A FastAPI application that safely ingests a project ZIP, builds a deterministic 
 - SQLite persistence for projects and documentation history.
 - Markdown viewer, Markdown/PDF/JPG downloads, project history, and health/provider status endpoints.
 - PDF export creates a multi-page document; JPG export creates one high-resolution long image from the same generated Markdown.
+- Persistent documentation chat lets users propose precise edits, review them, apply them as new revisions, and navigate history with Undo/Redo.
 
 ## Setup
 Python 3.10+ is recommended.
@@ -63,7 +64,7 @@ Check:
 A configured installation reports the provider, model, and `Ready` status without exposing the API key.
 
 ## API
-`POST /api/upload`, `POST /api/projects/{id}/generate?doc_type=README`, `GET /api/projects`, `GET /api/projects/{id}`, `GET /api/projects/{id}/download`, `GET /api/projects/{id}/download/pdf`, `GET /api/projects/{id}/download/jpg`, `GET /api/projects/{id}/versions`, `GET /api/projects/{id}/documentation-versions`, `GET /api/projects/{id}/changes`, `GET /api/projects/{id}/change-reports`, `POST /api/projects/{id}/maintenance`, `GET /api/projects/{id}/documentation-diff/{version_id}`, `POST /api/projects/{id}/documentation/{version_id}/decision`, `GET /api/gemini/status`, and `GET /api/health`.
+`POST /api/upload`, `POST /api/projects/{id}/generate?doc_type=README`, `GET /api/projects`, `GET /api/projects/{id}`, `GET /api/projects/{id}/download`, `GET /api/projects/{id}/download/pdf`, `GET /api/projects/{id}/download/jpg`, `GET /api/projects/{id}/workspace`, `POST /api/projects/{id}/chat`, `POST /api/projects/{id}/chat/apply`, `POST /api/projects/{id}/chat/undo`, `POST /api/projects/{id}/chat/redo`, `POST /api/projects/{id}/chat/restore/{revision_id}`, `GET /api/projects/{id}/versions`, `GET /api/projects/{id}/documentation-versions`, `GET /api/projects/{id}/changes`, `GET /api/projects/{id}/change-reports`, `POST /api/projects/{id}/maintenance`, `GET /api/projects/{id}/documentation-diff/{version_id}`, `POST /api/projects/{id}/documentation/{version_id}/decision`, `GET /api/gemini/status`, and `GET /api/health`.
 
 ## Testing
 
