@@ -52,10 +52,17 @@ async function handleUpload(e) {
     formData.append("name", name);
     formData.append("zip_file", selectedZipFile);
 
-    showLoading("Uploading and extracting files...");
+    const controller = new AbortController();
+    showLoading("Uploading and extracting files...", {
+        onCancel: () => controller.abort()
+    });
 
     try {
-        const result = await fetch("/api/upload", { method: "POST", body: formData });
+        const result = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+            signal: controller.signal
+        });
         const text = await result.text();
         let data;
         try {
@@ -76,7 +83,11 @@ async function handleUpload(e) {
         showToast("ZIP uploaded successfully!");
 
     } catch (err) {
-        showToast(err.message, "error");
+        if (err?.name === "AbortError") {
+            showToast("Upload stopped.", "error");
+        } else {
+            showToast(err.message, "error");
+        }
     } finally {
         hideLoading();
     }
