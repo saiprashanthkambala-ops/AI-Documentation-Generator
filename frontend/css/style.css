@@ -1094,3 +1094,186 @@ footer {
         transition-duration: .01ms !important;
     }
 }
+
+/* ------------------------------------------------------------
+   UI correction pass: contrast, balanced lighting, depth, logo
+   ------------------------------------------------------------ */
+
+/* Shared blue + violet accent language. */
+:root {
+    --accent: #8b7cff;
+}
+body[data-theme="light"] {
+    --primary: #586eea;
+    --primary-soft: #677ce8;
+    --accent: #5e6fd4;
+    --text: #182033;
+    --text-muted: #5f6c82;
+    --glass: rgba(255,255,255,.79);
+    --glass-strong: rgba(255,255,255,.90);
+    --glass-soft: rgba(255,255,255,.60);
+    --glass-border: rgba(76,96,125,.24);
+    --glass-highlight: rgba(255,255,255,.94);
+    --glass-shadow: 0 24px 64px rgba(59,78,111,.20);
+    --glass-shadow-soft: 0 15px 38px rgba(59,78,111,.14);
+}
+
+/* More purple in the dark atmospheric field, without increasing intensity. */
+body {
+    background:
+        radial-gradient(circle at 12% 12%, rgba(78,118,255,.13), transparent 30%),
+        radial-gradient(circle at 84% 18%, rgba(139,124,255,.14), transparent 28%),
+        radial-gradient(circle at 58% 88%, rgba(55,183,210,.08), transparent 26%),
+        linear-gradient(145deg, var(--bg), var(--bg-2));
+}
+body::after {
+    background: rgba(139,124,255,.13);
+}
+
+/* Light theme keeps the same color family in a much softer form. */
+body[data-theme="light"] {
+    background:
+        radial-gradient(circle at 8% 10%, rgba(104,129,250,.12), transparent 30%),
+        radial-gradient(circle at 82% 18%, rgba(139,124,255,.11), transparent 28%),
+        radial-gradient(circle at 90% 76%, rgba(111,205,194,.11), transparent 27%),
+        radial-gradient(circle at 52% 92%, rgba(108,183,255,.09), transparent 28%),
+        linear-gradient(145deg, var(--bg), var(--bg-2));
+}
+
+/* Light theme text must remain readable against frosted surfaces. */
+body[data-theme="light"] .text-light,
+body[data-theme="light"] .text-white,
+body[data-theme="light"] .text-white-50,
+body[data-theme="light"] .navbar .text-light,
+body[data-theme="light"] #geminiStatus {
+    color: var(--text) !important;
+}
+body[data-theme="light"] .navbar .text-white-50 {
+    color: var(--text-muted) !important;
+}
+
+/* Keep green online state visible in both themes. */
+.status-dot.online {
+    background: var(--success);
+    color: var(--success);
+    box-shadow: 0 0 10px rgba(46, 172, 140, .35);
+}
+body[data-theme="light"] .status-dot.online {
+    background: #2c9b7d;
+    color: #2c9b7d;
+    box-shadow: 0 0 8px rgba(44,155,125,.28);
+}
+
+/* Stronger light-theme panel separation, especially around curved edges. */
+body[data-theme="light"] .card,
+body[data-theme="light"] .feature-card,
+body[data-theme="light"] .sidebar-card,
+body[data-theme="light"] .doc-sidebar,
+body[data-theme="light"] .chat-panel,
+body[data-theme="light"] .stats-bar,
+body[data-theme="light"] .upload-zone,
+body[data-theme="light"] .loading-box,
+body[data-theme="light"] .modal-content,
+body[data-theme="light"] .table-responsive {
+    background: var(--glass) !important;
+    border-color: var(--glass-border) !important;
+    box-shadow:
+        inset 0 1px 0 var(--glass-highlight),
+        0 18px 42px rgba(59,78,111,.14),
+        0 2px 7px rgba(59,78,111,.08) !important;
+}
+body[data-theme="light"] .stat-item,
+body[data-theme="light"] .revision-item,
+body[data-theme="light"] .chat-input-shell {
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.95),
+        0 9px 24px rgba(59,78,111,.10) !important;
+}
+
+/* Light history page: preserve dense/detail-rich presentation. */
+body[data-theme="light"] .table {
+    --bs-table-color: var(--text);
+    --bs-table-hover-color: var(--text);
+    --bs-table-hover-bg: rgba(91,124,250,.08);
+}
+body[data-theme="light"] .table thead th,
+body[data-theme="light"] .table td,
+body[data-theme="light"] .table th {
+    color: var(--text) !important;
+    border-color: var(--glass-border) !important;
+}
+body[data-theme="light"] .table thead th {
+    background: rgba(255,255,255,.56) !important;
+}
+body[data-theme="light"] .history-row:hover {
+    background: rgba(91,124,250,.09) !important;
+}
+body[data-theme="light"] .text-bg-light {
+    color: var(--text) !important;
+    background: rgba(255,255,255,.58) !important;
+}
+
+/* Existing logo asset — do not recolor or recreate. */
+.navbar-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+}
+.brand-logo {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+    flex: 0 0 auto;
+    border-radius: 10px;
+    filter: drop-shadow(0 7px 18px rgba(0,0,0,.18));
+}
+.hero-logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.hero-brand-logo {
+    width: 84px;
+    height: 84px;
+    object-fit: contain;
+    border-radius: 18px;
+    filter: drop-shadow(0 12px 28px rgba(77,103,231,.20));
+}
+body[data-theme="light"] .brand-logo,
+body[data-theme="light"] .hero-brand-logo {
+    filter: drop-shadow(0 10px 24px rgba(67,84,116,.18));
+}
+
+/* Keep page titles/readability strong in the light theme. */
+body[data-theme="light"] .hero h1,
+body[data-theme="light"] h1,
+body[data-theme="light"] h2,
+body[data-theme="light"] h3,
+body[data-theme="light"] h4,
+body[data-theme="light"] h5,
+body[data-theme="light"] h6 {
+    color: var(--text);
+}
+body[data-theme="light"] .hero p {
+    color: var(--text-muted);
+}
+
+/* Keep select controls readable in both themes. */
+body[data-theme="light"] .form-select {
+    color: var(--text) !important;
+    background-color: rgba(255,255,255,.68) !important;
+}
+
+/* Small-screen logo sizing. */
+@media (max-width: 576px) {
+    .brand-logo {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+    }
+    .hero-brand-logo {
+        width: 68px;
+        height: 68px;
+        border-radius: 15px;
+    }
+}
