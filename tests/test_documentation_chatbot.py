@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from backend.database.models import Base, Project
-from backend.services.documentation_assistant import apply_proposal
+from backend.services.documentation_assistant import SYSTEM_PROMPT, apply_proposal
 from backend.services.revision_service import create_revision, current_revision, redo, undo
 
 
@@ -165,3 +165,11 @@ def test_style_theme_is_not_silent_when_model_returns_current_palette():
 
     selected = ensure_distinct_theme(DEFAULT_THEME, DEFAULT_THEME)
     assert selected == ALTERNATE_THEME
+
+
+
+def test_documentation_skill_is_loaded_into_api_chatbot_system_prompt():
+    assert "documentation-default-format" in SYSTEM_PROMPT
+    assert "PRECISION > CREATIVITY" in SYSTEM_PROMPT
+    assert "Only the requested target and property differ" in SYSTEM_PROMPT
+    assert "NO_CHANGE, REMOVE_TEXT, REMOVE_SECTION" in SYSTEM_PROMPT
