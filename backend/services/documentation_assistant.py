@@ -8,6 +8,7 @@ from typing import Any
 
 from backend.config import settings
 from backend.services.gemini_service import generate
+from backend.services.document_theme import DEFAULT_THEME
 from backend.services.zip_handler import get_file_tree, read_source_files
 
 
@@ -20,18 +21,22 @@ reply, operation, summary, target, replacement
 
 Allowed operations:
 NO_CHANGE, REMOVE_TEXT, REMOVE_SECTION, REPLACE_TEXT, REWRITE_SECTION,
-RENAME_HEADING, ADD_AFTER, ADD_BEFORE, APPEND, REWRITE_DOCUMENT
+RENAME_HEADING, ADD_AFTER, ADD_BEFORE, APPEND, REWRITE_DOCUMENT, STYLE_DOCUMENT
 
 Natural conversation rules:
 - Interpret normal conversational requests instead of rejecting them for being brief.
 - "increase the content", "make it more detailed", "add more content", "expand this document" => REWRITE_DOCUMENT.
 - "make the document smaller", "shorten it", "reduce the content", "make it concise" => REWRITE_DOCUMENT.
 - "humanize it", "make it more natural", "make it easier to read" => REWRITE_DOCUMENT.
+- "change the colours", "change the colors", "make it more colorful", "try a different colour theme" => STYLE_DOCUMENT.
+- A short follow-up such as "try" should use the immediately preceding styling request in the conversation and choose a professional accessible palette when no exact colors were provided.
+- STYLE_DOCUMENT changes presentation only; it must preserve the document wording and structure. Return a "theme" object with these hex keys: primary, secondary, accent, text, muted, surface, surface_alt, border, code_bg, code_text.
 - When the user asks for a whole-document transformation, target MUST be empty and replacement MUST be the COMPLETE revised Markdown document.
 - For whole-document transformations, preserve all important factual information from the current document, improve structure/readability, and use supplied source evidence for any new factual details.
 - Do not ask the user to specify a section when the requested transformation clearly applies to the entire document.
 - For a document-size request, interpret "size" from context: usually content length/detail, not page dimensions. Do not change PDF paper size unless explicitly requested.
 - "change the project name X into Y" => use REPLACE_TEXT or RENAME_HEADING with an exact current target.
+- For STYLE_DOCUMENT, target MUST be empty and replacement MUST be empty; return only the requested theme palette.
 - Copy target EXACTLY from the current documentation for operations that require a target.
 - Never invent target text.
 - ADD_AFTER/ADD_BEFORE require an exact unique anchor from the current documentation.
@@ -65,17 +70,18 @@ def _normalize(data: dict[str, Any]) -> dict[str, Any]:
     allowed = {
         "NO_CHANGE", "REMOVE_TEXT", "REMOVE_SECTION", "REPLACE_TEXT",
         "REWRITE_SECTION", "RENAME_HEADING", "ADD_AFTER", "ADD_BEFORE",
-        "APPEND", "REWRITE_DOCUMENT",
+        "APPEND", "REWRITE_DOCUMENT", "STYLE_DOCUMENT",
     }
     operation = str(data.get("operation", "NO_CHANGE")).strip().upper()
     if operation not in allowed:
         operation = "NO_CHANGE"
     target = str(data.get("target", ""))
     replacement = str(data.get("replacement", ""))
+    theme = data.get("theme") if isinstance(data.get("theme"), dict) else {}
     if operation == "NO_CHANGE":
         target = ""
         replacement = ""
-    elif operation == "REWRITE_DOCUMENT":
+    elif operation in {"REWRITE_DOCUMENT", "STYLE_DOCUMENT"}:
         target = ""
     return {
         "reply": str(data.get("reply", "")).strip()
@@ -84,6 +90,7 @@ def _normalize(data: dict[str, Any]) -> dict[str, Any]:
         "summary": str(data.get("summary", "")).strip() or "No documentation change proposed.",
         "target": target,
         "replacement": replacement,
+        "theme": theme if operation == "STYLE_DOCUMENT" else {},
     }
 
 
@@ -121,7 +128,7 @@ async def propose_change(
         f"{_clip(source, 18000)}\n\n"
         "RECENT CHAT:\n"
         f"{_conversation_text(conversation)}\n\n"
-        "Prepare the best safe response to the latest user message."
+        "Prepare the best safe response to the latest user message. If the latest message is a short follow-up, use the recent chat context to resolve what it refers to."
     )
     # Chat is primarily an instruction-following task. Gemini documents the
     # LOW thinking level as the latency/cost-oriented setting for chat.
@@ -154,6 +161,18 @@ def apply_proposal(
 
     if operation == "NO_CHANGE":
         raise ValueError("There is no applicable change in this assistant response.")
+
+    if operation == "STYLE_DOCUMENT":
+        from backend.services.document_theme import apply_theme
+        theme = proposal.get("theme")
+        if not isinstance(theme, dict):
+            raise ValueError("The assistant did not provide a valid document color theme.")
+        updated = apply_theme(markdown, theme)
+        return updated, {
+            "operation": operation,
+            "target": "",
+            "replacement": "",
+        }
 
     if operation == "REWRITE_DOCUMENT":
         if not replacement.strip():
