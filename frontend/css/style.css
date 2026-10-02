@@ -2244,3 +2244,289 @@ body[data-theme="light"] .profile-title-icon {
     .profile-card-header { padding: 1rem; }
     .profile-card-title { align-items: flex-start; }
 }
+
+
+/* ============================================================
+   STRICT LIGHT-THEME GLASSMORPHISM OVERRIDES
+   CSS-ONLY PASS — NO STRUCTURAL / HTML CHANGES
+   ============================================================ */
+
+body[data-theme="light"] {
+    /* Continuous viewport background: purple + ocean blue + baby pink. */
+    background:
+        radial-gradient(900px 620px at 8% 8%, rgba(139, 92, 246, .34), transparent 62%),
+        radial-gradient(980px 660px at 88% 18%, rgba(59, 130, 246, .30), transparent 64%),
+        radial-gradient(920px 700px at 56% 96%, rgba(249, 168, 212, .30), transparent 64%),
+        linear-gradient(135deg, #eef3ff 0%, #f6f1ff 46%, #fff1f7 100%);
+    background-attachment: fixed;
+    background-size: cover;
+    color: #111827 !important;
+}
+
+html[data-theme="light"],
+body[data-theme="light"] {
+    background-attachment: fixed;
+}
+
+body[data-theme="light"]::before,
+body[data-theme="light"]::after {
+    opacity: .72;
+    filter: blur(100px);
+    pointer-events: none;
+}
+
+body[data-theme="light"]::before {
+    background: rgba(139, 92, 246, .15);
+}
+body[data-theme="light"]::after {
+    background: rgba(249, 168, 212, .13);
+}
+
+/* Every application surface becomes frosted glass. */
+body[data-theme="light"] .navbar,
+body[data-theme="light"] .hero,
+body[data-theme="light"] .card,
+body[data-theme="light"] .feature-card,
+body[data-theme="light"] .sidebar-card,
+body[data-theme="light"] .doc-sidebar,
+body[data-theme="light"] .chat-panel,
+body[data-theme="light"] .stats-bar,
+body[data-theme="light"] .upload-zone,
+body[data-theme="light"] .loading-box,
+body[data-theme="light"] .modal-content,
+body[data-theme="light"] .alert,
+body[data-theme="light"] .table-responsive,
+body[data-theme="light"] .dropdown-menu,
+body[data-theme="light"] .revision-item,
+body[data-theme="light"] .chat-proposal {
+    background-color: rgba(255, 255, 255, .28) !important;
+    background-image: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, .34),
+        rgba(255, 255, 255, .13)
+    ) !important;
+    border: 1px solid rgba(255, 255, 255, .48) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .72),
+        0 8px 32px rgba(17, 24, 39, .10) !important;
+    backdrop-filter: blur(18px) saturate(125%);
+    -webkit-backdrop-filter: blur(18px) saturate(125%);
+    color: #111827 !important;
+}
+
+/* Hierarchy: main surfaces remain translucent but slightly stronger than nested surfaces. */
+body[data-theme="light"] .hero,
+body[data-theme="light"] .chat-panel,
+body[data-theme="light"] .modal-content {
+    background-color: rgba(255, 255, 255, .31) !important;
+}
+
+body[data-theme="light"] .feature-card,
+body[data-theme="light"] .sidebar-card,
+body[data-theme="light"] .doc-sidebar,
+body[data-theme="light"] .stats-bar,
+body[data-theme="light"] .upload-zone,
+body[data-theme="light"] .loading-box,
+body[data-theme="light"] .table-responsive,
+body[data-theme="light"] .revision-item,
+body[data-theme="light"] .chat-proposal {
+    background-color: rgba(255, 255, 255, .24) !important;
+}
+
+/* Do not let Bootstrap utility backgrounds reintroduce opaque light panels. */
+body[data-theme="light"] .bg-white,
+body[data-theme="light"] .bg-light,
+body[data-theme="light"] .bg-body,
+body[data-theme="light"] .bg-body-tertiary {
+    background-color: rgba(255, 255, 255, .24) !important;
+    color: #111827 !important;
+}
+
+/* Navigation */
+body[data-theme="light"] .navbar {
+    background-color: rgba(255, 255, 255, .30) !important;
+    border-color: rgba(255, 255, 255, .56) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .82),
+        0 10px 34px rgba(17, 24, 39, .09) !important;
+}
+body[data-theme="light"] .navbar .navbar-brand,
+body[data-theme="light"] .navbar .nav-link,
+body[data-theme="light"] .navbar .text-white,
+body[data-theme="light"] .navbar .text-white-50,
+body[data-theme="light"] .navbar small {
+    color: #111827 !important;
+}
+body[data-theme="light"] .navbar .nav-link:hover,
+body[data-theme="light"] .navbar .nav-link.active {
+    color: #111827 !important;
+    background: rgba(139, 92, 246, .12) !important;
+}
+body[data-theme="light"] .navbar-brand span {
+    color: #4f46e5 !important;
+}
+
+/* Typography: dark text for every application label and message. */
+body[data-theme="light"] h1,
+body[data-theme="light"] h2,
+body[data-theme="light"] h3,
+body[data-theme="light"] h4,
+body[data-theme="light"] h5,
+body[data-theme="light"] h6,
+body[data-theme="light"] p,
+body[data-theme="light"] li,
+body[data-theme="light"] label,
+body[data-theme="light"] dt,
+body[data-theme="light"] dd,
+body[data-theme="light"] th,
+body[data-theme="light"] td,
+body[data-theme="light"] .form-label,
+body[data-theme="light"] .form-text,
+body[data-theme="light"] .text-muted,
+body[data-theme="light"] .small,
+body[data-theme="light"] .chat-role,
+body[data-theme="light"] .chat-time {
+    color: #111827 !important;
+}
+
+body[data-theme="light"] .text-muted,
+body[data-theme="light"] .form-text,
+body[data-theme="light"] .chat-time,
+body[data-theme="light"] .chat-role {
+    color: #374151 !important;
+}
+
+body[data-theme="light"] a {
+    color: #4338ca !important;
+}
+body[data-theme="light"] a:hover {
+    color: #1d4ed8 !important;
+}
+
+/* Forms / fields */
+body[data-theme="light"] .form-control,
+body[data-theme="light"] .form-select {
+    background-color: rgba(255, 255, 255, .22) !important;
+    color: #111827 !important;
+    border: 1px solid rgba(255, 255, 255, .52) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .70),
+        0 8px 24px rgba(17, 24, 39, .06) !important;
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
+}
+body[data-theme="light"] .form-control:focus,
+body[data-theme="light"] .form-select:focus {
+    background-color: rgba(255, 255, 255, .32) !important;
+    border-color: rgba(79, 70, 229, .34) !important;
+    color: #111827 !important;
+    box-shadow:
+        0 0 0 .2rem rgba(79, 70, 229, .10),
+        inset 0 1px 0 rgba(255, 255, 255, .78),
+        0 10px 28px rgba(17, 24, 39, .08) !important;
+}
+body[data-theme="light"] .form-control::placeholder {
+    color: #4b5563 !important;
+}
+
+/* Buttons / active controls stay solid enough to be legible while remaining on-theme. */
+body[data-theme="light"] .btn-primary {
+    color: #fff !important;
+    background: linear-gradient(135deg, #6d5dfc, #3b82f6) !important;
+    border-color: rgba(255, 255, 255, .44) !important;
+    box-shadow:
+        0 8px 24px rgba(79, 70, 229, .22),
+        inset 0 1px 0 rgba(255, 255, 255, .24) !important;
+}
+body[data-theme="light"] .btn-outline-primary {
+    color: #4338ca !important;
+    background: rgba(255, 255, 255, .16) !important;
+    border-color: rgba(67, 56, 202, .28) !important;
+}
+body[data-theme="light"] .btn-secondary,
+body[data-theme="light"] .btn-outline-secondary,
+body[data-theme="light"] .btn-light {
+    color: #111827 !important;
+    background: rgba(255, 255, 255, .24) !important;
+    border-color: rgba(255, 255, 255, .50) !important;
+}
+
+/* Chat — keep user/assistant surfaces inside the same frosted system. */
+body[data-theme="light"] .chat-bubble {
+    border-color: rgba(255, 255, 255, .46) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .66) !important;
+}
+body[data-theme="light"] .chat-message.assistant .chat-bubble {
+    color: #111827 !important;
+    background: rgba(255, 255, 255, .23) !important;
+    backdrop-filter: blur(14px) saturate(120%);
+    -webkit-backdrop-filter: blur(14px) saturate(120%);
+}
+body[data-theme="light"] .chat-message.user .chat-bubble {
+    color: #fff !important;
+    background: linear-gradient(135deg, rgba(79, 70, 229, .88), rgba(59, 130, 246, .84)) !important;
+}
+
+/* Tables */
+body[data-theme="light"] .table,
+body[data-theme="light"] .table thead th,
+body[data-theme="light"] .table tbody td {
+    color: #111827 !important;
+}
+body[data-theme="light"] .table thead th {
+    background: rgba(255, 255, 255, .20) !important;
+    border-color: rgba(255, 255, 255, .46) !important;
+}
+
+/* Status */
+body[data-theme="light"] .status-dot.online {
+    background: #16a34a !important;
+    color: #16a34a !important;
+    box-shadow: 0 0 10px rgba(22, 163, 74, .28) !important;
+}
+
+/* Loading / modal surfaces remain translucent over a blurred viewport. */
+body[data-theme="light"] .loading-overlay {
+    background: rgba(230, 236, 248, .34) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+body[data-theme="light"] .modal-backdrop.show {
+    background: rgba(122, 91, 170, .26) !important;
+}
+
+/* Generated documentation remains a separate document-rendering surface. */
+body[data-theme="light"] .doc-preview {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* Accessibility / interaction */
+body[data-theme="light"] button:focus-visible,
+body[data-theme="light"] a:focus-visible,
+body[data-theme="light"] .form-control:focus-visible,
+body[data-theme="light"] .form-select:focus-visible {
+    outline: 2px solid rgba(79, 70, 229, .55);
+    outline-offset: 2px;
+}
+
+/* Prevent common nested wrappers from painting solid light surfaces. */
+body[data-theme="light"] .container,
+body[data-theme="light"] main,
+body[data-theme="light"] section {
+    background-color: transparent;
+}
+
+/* Maintain subtle hierarchy between nested glass layers. */
+body[data-theme="light"] .card .card,
+body[data-theme="light"] .hero .card,
+body[data-theme="light"] .chat-panel .chat-proposal,
+body[data-theme="light"] .sidebar-card .revision-item {
+    background-color: rgba(255, 255, 255, .18) !important;
+    border-color: rgba(255, 255, 255, .38) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .60),
+        0 6px 18px rgba(17, 24, 39, .06) !important;
+    backdrop-filter: blur(14px) saturate(118%);
+    -webkit-backdrop-filter: blur(14px) saturate(118%);
+}
