@@ -18,3 +18,13 @@ def test_missing_gemini_key(monkeypatch):
  from backend.services.gemini_service import generate
  with pytest.raises(ProviderError) as e: asyncio.run(generate('test'))
  assert e.value.code=='AI_NOT_CONFIGURED'
+
+
+def test_zip_upload_limit_is_200_mb():
+    from backend.config import settings
+    from backend.services.zip_handler import validate_zip
+
+    limit = settings.MAX_ZIP_SIZE_MB * 1024 * 1024
+    assert settings.MAX_ZIP_SIZE_MB == 200
+    assert validate_zip("missing.zip", limit)[1] == "Invalid ZIP archive"
+    assert validate_zip("missing.zip", limit + 1)[1] == "ZIP exceeds 200MB limit"
