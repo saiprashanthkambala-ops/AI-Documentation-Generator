@@ -85,20 +85,28 @@ async function handleUpload(e) {
 async function handleGenerate() {
     if (!uploadedProjectId) return;
 
-    showAgentLoading();
+    const controller = new AbortController();
+    showLoading("Generating documentation with Gemini...", {
+        onCancel: () => controller.abort()
+    });
 
     try {
         const type = document.getElementById('docType')?.value || 'README';
         const result = await apiRequest(`/api/projects/${uploadedProjectId}/generate?doc_type=${encodeURIComponent(type)}`, {
             method: "POST",
+            signal: controller.signal
         });
 
         showToast(result.message || "Documentation generated!");
         window.location.href = `/documentation?id=${uploadedProjectId}`;
 
     } catch (err) {
-        showToast(err.message, "error");
+        if (err?.name === "AbortError") {
+            showToast("Documentation generation stopped.", "error");
+        } else {
+            showToast(err.message, "error");
+        }
     } finally {
-        hideAgentLoading();
+        hideLoading();
     }
 }

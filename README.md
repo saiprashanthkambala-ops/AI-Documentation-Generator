@@ -65,7 +65,7 @@ Check:
 A configured installation reports the provider, model, and `Ready` status without exposing the API key.
 
 ## API
-`POST /api/upload`, `POST /api/projects/{id}/generate?doc_type=README`, `GET /api/projects`, `GET /api/projects/{id}`, `GET /api/projects/{id}/download`, `GET /api/projects/{id}/download/pdf`, `GET /api/projects/{id}/download/jpg`, `GET /api/projects/{id}/workspace`, `POST /api/projects/{id}/chat`, `POST /api/projects/{id}/chat/apply`, `POST /api/projects/{id}/chat/undo`, `POST /api/projects/{id}/chat/redo`, `POST /api/projects/{id}/chat/restore/{revision_id}`, `GET /api/projects/{id}/versions`, `GET /api/projects/{id}/documentation-versions`, `GET /api/projects/{id}/changes`, `GET /api/projects/{id}/change-reports`, `POST /api/projects/{id}/maintenance`, `GET /api/projects/{id}/documentation-diff/{version_id}`, `POST /api/projects/{id}/documentation/{version_id}/decision`, `GET /api/gemini/status`, and `GET /api/health`.
+`POST /api/upload`, `POST /api/projects/{id}/generate?doc_type=README`, `GET /api/projects`, `GET /api/projects/{id}`, `GET /api/projects/{id}/download`, `GET /api/projects/{id}/download/pdf`, `GET /api/projects/{id}/download/jpg`, `GET /api/projects/{id}/workspace`, `POST /api/projects/{id}/chat`, `POST /api/projects/{id}/chat/apply`, `POST /api/projects/{id}/chat/undo`, `POST /api/projects/{id}/chat/redo`, `POST /api/projects/{id}/chat/restore/{revision_id}`, `GET /api/projects/{id}/versions`, `GET /api/projects/{id}/documentation-versions`, `GET /api/projects/{id}/changes`, `GET /api/projects/{id}/change-reports`, `GET /api/projects/{id}/documentation-diff/{version_id}`, `GET /api/gemini/status`, and `GET /api/health`.
 
 ## Testing
 

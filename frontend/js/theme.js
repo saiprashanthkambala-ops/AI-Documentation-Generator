@@ -24,18 +24,23 @@
         const button = document.getElementById("themeToggle");
         if (!button) return;
         const next = theme === "dark" ? "light" : "dark";
-        button.textContent = theme === "dark" ? "☼" : "☾";
+        button.innerHTML = theme === "dark"
+            ? '<i class="bi bi-sun" aria-hidden="true"></i>'
+            : '<i class="bi bi-moon-stars" aria-hidden="true"></i>';
         button.title = "Switch to " + next + " theme";
         button.setAttribute("aria-label", "Switch to " + next + " theme");
     }
 
-    function mountToggle() {
+    function mountControls() {
         const nav = document.querySelector(".navbar .navbar-nav");
         if (!nav || document.getElementById("themeToggle")) return;
 
         const wrap = document.createElement("div");
-        wrap.className = "d-flex align-items-center ms-1";
-        wrap.innerHTML = '<button id="themeToggle" class="theme-toggle" type="button" aria-label="Switch theme"></button>';
+        wrap.className = "app-controls d-flex align-items-center gap-2 ms-1";
+        wrap.innerHTML =
+            '<button id="themeToggle" class="theme-toggle" type="button" aria-label="Switch theme"></button>' +
+            '<a class="profile-trigger" href="/profile" title="Profile" aria-label="Open profile">' +
+            '<i class="bi bi-person-circle" aria-hidden="true"></i></a>';
         nav.appendChild(wrap);
 
         document.getElementById("themeToggle").addEventListener("click", () => {
@@ -48,7 +53,7 @@
 
     function init() {
         applyTheme(getInitialTheme());
-        mountToggle();
+        mountControls();
     }
 
     if (document.readyState === "loading") {

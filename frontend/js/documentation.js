@@ -6,11 +6,13 @@ let currentProjectId = null;
 let currentMarkdown = "";
 let workspaceState = null;
 let revisionModal = null;
+let infoModal = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     checkGeminiStatus();
     currentProjectId = getQueryParam("id");
     revisionModal = new bootstrap.Modal(document.getElementById("revisionPreviewModal"));
+    infoModal = new bootstrap.Modal(document.getElementById("infoModal"));
 
     document.getElementById("undoBtn")?.addEventListener("click", undoChange);
     document.getElementById("redoBtn")?.addEventListener("click", redoChange);
@@ -65,6 +67,7 @@ async function loadWorkspace() {
     renderDocumentation(currentMarkdown);
     renderRevisionHistory(workspace.revisions);
     renderChatMessages(workspace.messages);
+    renderExportLibrary(workspace);
     updateRevisionButtons(workspace);
 }
 
@@ -201,12 +204,13 @@ function renderChatMessage(message) {
 async function sendChat() {
     const input = document.getElementById("chatInput");
     const button = document.getElementById("sendChatBtn");
+    const thinking = document.getElementById("chatThinking");
     const message = input.value.trim();
-    if (!message || !currentProjectId) return;
+    if (!message || !currentProjectId || button.disabled) return;
+
     input.value = "";
     button.disabled = true;
-    const previous = button.innerHTML;
-    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Thinking...';
+    if (thinking) thinking.hidden = false;
 
     try {
         await apiRequest("/api/projects/" + currentProjectId + "/chat", {
@@ -220,7 +224,7 @@ async function sendChat() {
         showToast(err.message, "error");
     } finally {
         button.disabled = false;
-        button.innerHTML = previous;
+        if (thinking) thinking.hidden = true;
     }
 }
 
@@ -305,13 +309,24 @@ function updateRevisionButtons(workspace) {
 }
 
 async function generateNow(projectId) {
-    showLoading("Generating documentation with Gemini...");
+    const controller = new AbortController();
+    showLoading("Generating documentation with Gemini...", {
+        onCancel: () => controller.abort()
+    });
+
     try {
-        const result = await apiRequest("/api/projects/" + projectId + "/generate", { method: "POST" });
+        const result = await apiRequest("/api/projects/" + projectId + "/generate", {
+            method: "POST",
+            signal: controller.signal
+        });
         showToast(result.message || "Documentation generated!");
         await loadDocumentation(projectId);
     } catch (err) {
-        showToast(err.message, "error");
+        if (err?.name === "AbortError") {
+            showToast("Documentation generation stopped.", "error");
+        } else {
+            showToast(err.message, "error");
+        }
     } finally {
         hideLoading();
     }
@@ -355,6 +370,90 @@ async function downloadDoc(format, buttonId) {
             button.innerHTML = originalHtml;
         }
     }
+}
+
+function renderExportLibrary(workspace) {
+    const list = document.getElementById("exportList");
+    const badge = document.getElementById("exportRevisionLabel");
+    if (!list) return;
+
+    const revision = getCurrentVersionNumber(workspace?.revisions || []);
+    if (badge) badge.textContent = "V" + revision;
+
+    const files = [
+        {
+            format: "pdf",
+            title: "PDF Document",
+            icon: "bi-file-earmark-pdf",
+            description: "Professional PDF export of the current documentation revision."
+        },
+        {
+            format: "jpg",
+            title: "JPG Document",
+            icon: "bi-file-earmark-image",
+            description: "High-resolution JPG export of the current documentation revision."
+        },
+        {
+            format: "markdown",
+            title: "Markdown Source",
+            icon: "bi-markdown",
+            description: "The editable Markdown source used by the documentation workspace."
+        }
+    ];
+
+    list.innerHTML = files.map(file =>
+        '<button type="button" class="export-item" onclick="openExportDetails(\'' + file.format + '\')">' +
+            '<span class="export-icon"><i class="bi ' + file.icon + '"></i></span>' +
+            '<span class="export-copy"><strong>' + file.title + '</strong><small>' + file.description + '</small></span>' +
+            '<i class="bi bi-chevron-right export-arrow"></i>' +
+        '</button>'
+    ).join("");
+}
+
+function openExportDetails(format) {
+    const revision = getCurrentVersionNumber(workspaceState?.revisions || []);
+    const meta = {
+        pdf: {
+            title: "PDF Document",
+            icon: "bi-file-earmark-pdf",
+            description: "A professional multi-page PDF generated from the current documentation revision.",
+            action: '<button type="button" class="btn btn-primary" onclick="downloadExportFromModal(\'pdf\')"><i class="bi bi-download"></i> Download PDF</button>'
+        },
+        jpg: {
+            title: "JPG Document",
+            icon: "bi-file-earmark-image",
+            description: "A high-resolution JPG export generated from the current documentation revision.",
+            action: '<button type="button" class="btn btn-primary" onclick="downloadExportFromModal(\'jpg\')"><i class="bi bi-download"></i> Download JPG</button>'
+        },
+        markdown: {
+            title: "Markdown Source",
+            icon: "bi-markdown",
+            description: "The current editable Markdown content used by the workspace.",
+            action: '<button type="button" class="btn btn-primary" onclick="copyDoc(); infoModal?.hide();"><i class="bi bi-clipboard"></i> Copy Markdown</button>'
+        }
+    };
+    const selected = meta[format] || meta.markdown;
+    document.getElementById("infoModalTitle").innerHTML =
+        '<i class="bi ' + selected.icon + '"></i> ' + selected.title;
+    document.getElementById("infoModalBody").innerHTML =
+        '<div class="export-detail">' +
+            '<div class="export-detail-badge">Revision V' + revision + '</div>' +
+            '<p>' + selected.description + '</p>' +
+            '<dl class="export-detail-list">' +
+                '<dt>Project</dt><dd>' + escapeHtml(document.getElementById("docTitle")?.textContent || "Current project") + '</dd>' +
+                '<dt>Status</dt><dd>Ready to export</dd>' +
+                '<dt>Source</dt><dd>Current approved documentation revision</dd>' +
+            '</dl>' +
+        '</div>';
+    document.getElementById("infoModalFooter").innerHTML =
+        selected.action + '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>';
+    infoModal?.show();
+}
+
+function downloadExportFromModal(format) {
+    infoModal?.hide();
+    const buttonId = format === "pdf" ? "downloadPdfBtn" : "downloadJpgBtn";
+    downloadDoc(format, buttonId);
 }
 
 function copyDoc() {

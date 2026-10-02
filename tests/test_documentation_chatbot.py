@@ -173,3 +173,32 @@ def test_documentation_skill_is_loaded_into_api_chatbot_system_prompt():
     assert "PRECISION > CREATIVITY" in SYSTEM_PROMPT
     assert "Only the requested target and property differ" in SYSTEM_PROMPT
     assert "NO_CHANGE, REMOVE_TEXT, REMOVE_SECTION" in SYSTEM_PROMPT
+
+
+def test_ui_contract_keeps_maintenance_out_and_profile_in():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    for page in ["index.html", "upload.html", "history.html", "documentation.html"]:
+        content = (root / "frontend" / page).read_text(encoding="utf-8")
+        assert "/maintenance" not in content
+
+    profile = (root / "frontend" / "profile.html").read_text(encoding="utf-8")
+    theme = (root / "frontend" / "js" / "theme.js").read_text(encoding="utf-8")
+    assert "profile-trigger" in theme
+    assert 'id="profileForm"' in profile
+
+
+def test_ui_contract_has_cancellable_generation_and_chat_thinking_state():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    api = (root / "frontend" / "js" / "api.js").read_text(encoding="utf-8")
+    documentation = (root / "frontend" / "js" / "documentation.js").read_text(encoding="utf-8")
+    page = (root / "frontend" / "documentation.html").read_text(encoding="utf-8")
+
+    assert "AbortController" in documentation
+    assert "controller.abort()" in documentation
+    assert "chatThinking" in documentation
+    assert "loadingCancelBtn" in api
+    assert "Generated Files" in page
