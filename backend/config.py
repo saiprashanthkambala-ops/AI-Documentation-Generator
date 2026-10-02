@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     UPLOADS_DIR: Path = BASE_DIR / "uploads"
     DOCS_DIR: Path = BASE_DIR / "docs"
 
+    # Maximum ZIP upload size in megabytes.
     MAX_ZIP_SIZE_MB: int = 200
     MAX_ZIP_FILES: int = 2000
     MAX_EXTRACTED_SIZE_MB: int = 200
