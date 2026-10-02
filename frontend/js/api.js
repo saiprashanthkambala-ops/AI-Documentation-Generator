@@ -60,12 +60,16 @@ function showLoading(message = "Please wait...", options = {}) {
         ? '<div class="loading-cancel-note">You can stop this operation at any time.</div>'
         : "";
 
+    const subtitle = String(message).toLowerCase().includes("uploading")
+        ? "Preparing and extracting your project..."
+        : "Gemini may take a moment to respond";
+
     el.innerHTML =
         '<div class="loading-box loading-dialog">' +
             closeButton +
             '<div class="spinner-border text-primary mb-3"></div>' +
             '<p class="fw-semibold mb-1">' + message + '</p>' +
-            '<small class="text-muted">Gemini may take a moment to respond</small>' +
+            '<small class="text-muted">' + subtitle + '</small>' +
             cancelNote +
         '</div>';
     document.body.appendChild(el);

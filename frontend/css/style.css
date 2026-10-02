@@ -1862,3 +1862,302 @@ body[data-theme="dark"] .history-row td {
         min-height: 160px !important;
     }
 }
+
+
+/* ============================================================
+   Precision UI correction pass
+   ============================================================ */
+
+/* Homepage: the three process cards are equal in size and evenly spaced. */
+.step-card-row {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 1.2rem !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+.step-card-row > .col-md-4 {
+    flex: 1 1 0 !important;
+    width: 0 !important;
+    max-width: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+.step-card-row .step-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 184px !important;
+    min-height: 184px !important;
+    margin: 0 !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.step-card-row .step-card .step-badge {
+    flex: 0 0 auto;
+}
+@media (max-width: 767px) {
+    .step-card-row {
+        display: grid !important;
+        grid-template-columns: 1fr;
+        gap: 1rem !important;
+    }
+    .step-card-row > .col-md-4 {
+        width: 100% !important;
+    }
+    .step-card-row .step-card {
+        height: 160px !important;
+        min-height: 160px !important;
+    }
+}
+
+/* Chat: short user messages should produce short bubbles, not full-width blocks. */
+.chat-message {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+.chat-message.user {
+    align-items: flex-end;
+    text-align: right;
+}
+.chat-message.user .chat-bubble {
+    display: inline-block;
+    width: fit-content;
+    max-width: min(82%, 30rem);
+    align-self: flex-end;
+}
+.chat-message.user .chat-time {
+    align-self: flex-end;
+}
+.chat-message.assistant .chat-bubble {
+    max-width: 94%;
+}
+
+/* Chat composer: keep the same horizontal length while reducing vertical bulk. */
+.chat-composer {
+    padding: .7rem .8rem .62rem;
+}
+.chat-input-shell {
+    min-height: 54px;
+    height: 54px;
+    border-radius: 15px;
+}
+.chat-composer textarea {
+    min-height: 52px !important;
+    max-height: 52px !important;
+    height: 52px !important;
+    resize: none !important;
+    padding: .72rem 3.4rem .72rem .9rem !important;
+    line-height: 1.35;
+    overflow-y: auto;
+}
+.chat-send-btn {
+    width: 36px;
+    height: 36px;
+    right: .5rem;
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+}
+.chat-send-btn:hover {
+    transform: translateY(-50%) scale(1.03);
+}
+
+/* Thinking is always a separate, non-overlapping row above the input. */
+.chat-thinking {
+    position: static !important;
+    width: 100%;
+    min-height: 20px;
+    margin: 0 0 .35rem .15rem !important;
+    line-height: 1.2;
+}
+.chat-thinking[hidden] {
+    display: none !important;
+}
+
+/* Cancellable task popup: the stop X is always in the top-right corner. */
+.loading-box.loading-dialog {
+    position: relative;
+    overflow: visible;
+}
+.loading-close {
+    position: absolute !important;
+    top: .65rem !important;
+    right: .65rem !important;
+    z-index: 3;
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    border: 1px solid rgba(239, 91, 113, .42) !important;
+    border-radius: 10px !important;
+    background: rgba(239, 91, 113, .12) !important;
+    color: #ff91a1 !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+        0 6px 18px rgba(239, 91, 113, .12),
+        inset 0 1px 0 rgba(255,255,255,.10);
+}
+.loading-close:hover {
+    background: rgba(239, 91, 113, .20) !important;
+    color: #ffb2be !important;
+}
+
+/* Every informational modal gets the same soft red close treatment. */
+.modal-content {
+    position: relative;
+}
+.modal-content .btn-close {
+    width: 32px;
+    height: 32px;
+    opacity: 1;
+    border-radius: 10px;
+    border: 1px solid rgba(239, 91, 113, .32);
+    background:
+        rgba(239, 91, 113, .10)
+        var(--bs-btn-close-bg) center / 9px auto no-repeat;
+    filter: none !important;
+    box-shadow: 0 6px 16px rgba(239,91,113,.08), inset 0 1px 0 rgba(255,255,255,.08);
+}
+body[data-theme="dark"] .modal-content .btn-close {
+    --bs-btn-close-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2.2 2.2l11.6 11.6M13.8 2.2L2.2 13.8' stroke='%23ffdfe4' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+body[data-theme="light"] .modal-content .btn-close {
+    --bs-btn-close-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2.2 2.2l11.6 11.6M13.8 2.2L2.2 13.8' stroke='%23a33f51' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* Light theme: translucent frosted glass, not opaque white cards. */
+body[data-theme="light"] {
+    --glass: rgba(255, 255, 255, .46);
+    --glass-strong: rgba(255, 255, 255, .60);
+    --glass-soft: rgba(255, 255, 255, .30);
+    --glass-border: rgba(82, 104, 137, .22);
+    --glass-highlight: rgba(255, 255, 255, .82);
+    --glass-shadow: 0 24px 64px rgba(70, 91, 124, .15);
+    --glass-shadow-soft: 0 13px 34px rgba(70, 91, 124, .10);
+    --field-bg: rgba(255, 255, 255, .34);
+    --field-border: rgba(82, 104, 137, .22);
+    --nav-bg: rgba(255, 255, 255, .38);
+    --nav-border: rgba(82, 104, 137, .16);
+}
+body[data-theme="light"] {
+    background:
+        radial-gradient(circle at 7% 8%, rgba(113, 137, 255, .18), transparent 28%),
+        radial-gradient(circle at 76% 12%, rgba(165, 135, 255, .16), transparent 26%),
+        radial-gradient(circle at 91% 48%, rgba(93, 205, 190, .15), transparent 25%),
+        radial-gradient(circle at 40% 92%, rgba(111, 176, 255, .12), transparent 30%),
+        linear-gradient(145deg, #e9eff7 0%, #f5f8fc 52%, #eaf4f4 100%);
+    padding-top: 10px;
+}
+body[data-theme="light"]::before {
+    background: rgba(117, 134, 255, .16);
+    filter: blur(86px);
+    opacity: .7;
+}
+body[data-theme="light"]::after {
+    background: rgba(159, 132, 255, .12);
+    filter: blur(90px);
+    opacity: .65;
+}
+
+/* Frosted glass panels across the light-mode system UI. */
+body[data-theme="light"] .navbar,
+body[data-theme="light"] .hero,
+body[data-theme="light"] .card,
+body[data-theme="light"] .feature-card,
+body[data-theme="light"] .sidebar-card,
+body[data-theme="light"] .doc-sidebar,
+body[data-theme="light"] .chat-panel,
+body[data-theme="light"] .stats-bar,
+body[data-theme="light"] .upload-zone,
+body[data-theme="light"] .loading-box,
+body[data-theme="light"] .modal-content,
+body[data-theme="light"] .alert,
+body[data-theme="light"] .table-responsive {
+    background-color: transparent !important;
+    background-image:
+        linear-gradient(135deg, rgba(255,255,255,.36), rgba(255,255,255,.15) 48%, rgba(159,150,255,.08)),
+        radial-gradient(circle at 90% 8%, rgba(143,129,255,.10), transparent 36%),
+        radial-gradient(circle at 8% 88%, rgba(84,190,207,.08), transparent 34%);
+    border-color: rgba(82,104,137,.20) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.88),
+        inset 0 0 0 1px rgba(255,255,255,.10),
+        0 18px 46px rgba(70,91,124,.13) !important;
+    backdrop-filter: blur(24px) saturate(135%);
+    -webkit-backdrop-filter: blur(24px) saturate(135%);
+}
+body[data-theme="light"] .navbar {
+    background-image:
+        linear-gradient(110deg, rgba(255,255,255,.54), rgba(255,255,255,.28)),
+        radial-gradient(circle at 82% 0%, rgba(143,129,255,.12), transparent 32%) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.92),
+        0 16px 36px rgba(70,91,124,.11) !important;
+}
+body[data-theme="light"] .hero {
+    background-image:
+        linear-gradient(125deg, rgba(255,255,255,.42), rgba(255,255,255,.17) 48%, rgba(116,131,255,.11)),
+        radial-gradient(circle at 92% 8%, rgba(145,127,255,.16), transparent 38%),
+        radial-gradient(circle at 10% 94%, rgba(87,194,208,.11), transparent 34%) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.92),
+        0 22px 52px rgba(70,91,124,.15) !important;
+}
+body[data-theme="light"] .hero::before {
+    background: rgba(154, 129, 255, .15);
+    filter: blur(84px);
+}
+body[data-theme="light"] .hero::after {
+    background: linear-gradient(115deg, rgba(255,255,255,.18), transparent 28%, transparent 72%, rgba(91, 196, 208, .08));
+}
+body[data-theme="light"] .feature-card {
+    background-image:
+        linear-gradient(140deg, rgba(255,255,255,.45), rgba(255,255,255,.22)),
+        radial-gradient(circle at 88% 0%, rgba(143,129,255,.11), transparent 36%) !important;
+}
+body[data-theme="light"] .form-control,
+body[data-theme="light"] .form-select,
+body[data-theme="light"] .chat-input-shell {
+    background-color: rgba(255,255,255,.30) !important;
+    border-color: rgba(82,104,137,.22) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.80),
+        0 10px 26px rgba(70,91,124,.07) !important;
+    backdrop-filter: blur(20px) saturate(130%);
+    -webkit-backdrop-filter: blur(20px) saturate(130%);
+}
+body[data-theme="light"] .form-control:focus,
+body[data-theme="light"] .form-select:focus,
+body[data-theme="light"] .chat-input-shell:focus-within {
+    background-color: rgba(255,255,255,.42) !important;
+    border-color: rgba(92,115,220,.42) !important;
+    box-shadow:
+        0 0 0 .2rem rgba(103,125,230,.10),
+        inset 0 1px 0 rgba(255,255,255,.88),
+        0 12px 30px rgba(70,91,124,.10) !important;
+}
+body[data-theme="light"] .doc-preview {
+    /* Documentation remains independent from application glass styling. */
+    background: var(--doc-shell-bg) !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+/* Make dark-theme text hierarchy remain crisp while keeping purple/blue ambient light. */
+body[data-theme="dark"] .card,
+body[data-theme="dark"] .feature-card,
+body[data-theme="dark"] .sidebar-card,
+body[data-theme="dark"] .doc-sidebar,
+body[data-theme="dark"] .chat-panel,
+body[data-theme="dark"] .stats-bar,
+body[data-theme="dark"] .loading-box,
+body[data-theme="dark"] .modal-content {
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.06),
+        0 20px 52px rgba(0,0,0,.28),
+        0 0 44px rgba(111,95,255,.035) !important;
+}
