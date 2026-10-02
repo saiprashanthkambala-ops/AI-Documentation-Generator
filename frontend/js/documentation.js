@@ -68,6 +68,40 @@ async function loadWorkspace() {
     updateRevisionButtons(workspace);
 }
 
+function applyDocumentTheme(markdown) {
+    const defaults = {
+        primary: "#4f46e5",
+        secondary: "#3730a3",
+        accent: "#7c3aed",
+        text: "#243447",
+        muted: "#64748b",
+        surface: "#f8fafc",
+        surface_alt: "#eef2ff",
+        border: "#d8e0ea",
+        code_bg: "#101827",
+        code_text: "#e2e8f0"
+    };
+    const match = String(markdown || "").match(/^\\s*<!--\\s*DOC_THEME:\\s*(\\{.*\\})\\s*-->\\s*$/m);
+    let theme = defaults;
+    if (match) {
+        try {
+            const candidate = JSON.parse(match[1]);
+            const safe = { ...defaults };
+            for (const key of Object.keys(defaults)) {
+                if (typeof candidate[key] === "string" && /^#[0-9a-fA-F]{6}$/.test(candidate[key])) {
+                    safe[key] = candidate[key];
+                }
+            }
+            theme = safe;
+        } catch (_) {}
+    }
+    const el = document.getElementById("docContent");
+    if (!el) return;
+    for (const [key, value] of Object.entries(theme)) {
+        el.style.setProperty("--doc-" + key.replaceAll("_", "-"), value);
+    }
+}
+
 function renderDocumentation(markdown) {
     const words = countWords(markdown);
     const sections = (markdown.match(/^## /gm) || []).length;
@@ -76,6 +110,7 @@ function renderDocumentation(markdown) {
     document.getElementById("statFiles").textContent = getFileCountFromMeta();
     document.getElementById("statReadTime").textContent = Math.max(1, Math.ceil(words / 200));
 
+    applyDocumentTheme(markdown);
     document.getElementById("docContent").innerHTML = markdownToHtml(markdown);
     const headings = buildDocSidebar(markdown);
     document.getElementById("tocNav").innerHTML = headings.map(h =>
