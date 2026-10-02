@@ -20,17 +20,25 @@ reply, operation, summary, target, replacement
 
 Allowed operations:
 NO_CHANGE, REMOVE_TEXT, REMOVE_SECTION, REPLACE_TEXT, REWRITE_SECTION,
-RENAME_HEADING, ADD_AFTER, ADD_BEFORE, APPEND
+RENAME_HEADING, ADD_AFTER, ADD_BEFORE, APPEND, REWRITE_DOCUMENT
 
-Safe-edit rules:
-- Copy target EXACTLY from the current documentation for any operation that needs a target.
+Natural conversation rules:
+- Interpret normal conversational requests instead of rejecting them for being brief.
+- "increase the content", "make it more detailed", "add more content", "expand this document" => REWRITE_DOCUMENT.
+- "make the document smaller", "shorten it", "reduce the content", "make it concise" => REWRITE_DOCUMENT.
+- "humanize it", "make it more natural", "make it easier to read" => REWRITE_DOCUMENT.
+- When the user asks for a whole-document transformation, target MUST be empty and replacement MUST be the COMPLETE revised Markdown document.
+- For whole-document transformations, preserve all important factual information from the current document, improve structure/readability, and use supplied source evidence for any new factual details.
+- Do not ask the user to specify a section when the requested transformation clearly applies to the entire document.
+- For a document-size request, interpret "size" from context: usually content length/detail, not page dimensions. Do not change PDF paper size unless explicitly requested.
+- "change the project name X into Y" => use REPLACE_TEXT or RENAME_HEADING with an exact current target.
+- Copy target EXACTLY from the current documentation for operations that require a target.
 - Never invent target text.
 - ADD_AFTER/ADD_BEFORE require an exact unique anchor from the current documentation.
 - APPEND uses an empty target.
 - replacement contains only new Markdown.
-- Make the smallest possible change; do not rewrite unrelated content.
 - For factual additions, use only the supplied source evidence.
-- If the request is ambiguous or unsupported by evidence, return NO_CHANGE and explain.
+- NO_CHANGE is appropriate only when the request is genuinely impossible, unsafe, or lacks enough context to perform the requested transformation.
 - Do not output JSON inside Markdown fences.
 """.strip()
 
@@ -56,7 +64,8 @@ def _extract_json(raw: str) -> dict[str, Any] | None:
 def _normalize(data: dict[str, Any]) -> dict[str, Any]:
     allowed = {
         "NO_CHANGE", "REMOVE_TEXT", "REMOVE_SECTION", "REPLACE_TEXT",
-        "REWRITE_SECTION", "RENAME_HEADING", "ADD_AFTER", "ADD_BEFORE", "APPEND",
+        "REWRITE_SECTION", "RENAME_HEADING", "ADD_AFTER", "ADD_BEFORE",
+        "APPEND", "REWRITE_DOCUMENT",
     }
     operation = str(data.get("operation", "NO_CHANGE")).strip().upper()
     if operation not in allowed:
@@ -66,6 +75,8 @@ def _normalize(data: dict[str, Any]) -> dict[str, Any]:
     if operation == "NO_CHANGE":
         target = ""
         replacement = ""
+    elif operation == "REWRITE_DOCUMENT":
+        target = ""
     return {
         "reply": str(data.get("reply", "")).strip()
         or "I understood your request, but I could not prepare a safe documentation change.",
@@ -143,6 +154,18 @@ def apply_proposal(
 
     if operation == "NO_CHANGE":
         raise ValueError("There is no applicable change in this assistant response.")
+
+    if operation == "REWRITE_DOCUMENT":
+        if not replacement.strip():
+            raise ValueError("The proposed full-document content is empty.")
+        updated = replacement.strip() + "\n"
+        if not updated.strip().startswith("#"):
+            raise ValueError("The proposed full-document content must be Markdown with a heading.")
+        return updated, {
+            "operation": operation,
+            "target": "",
+            "replacement": replacement.strip(),
+        }
 
     if operation == "APPEND":
         if not replacement.strip():
