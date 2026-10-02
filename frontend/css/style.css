@@ -347,9 +347,13 @@ h1, h2, h3, h4, h5, h6,
     border-color: rgba(91,124,250,.4) !important;
     background: rgba(91,124,250,.08) !important;
 }
-.btn-danger,
-.btn-outline-danger {
+.btn-danger {
     color: #fff !important;
+    background: rgba(204, 101, 119, .85) !important;
+}
+.btn-outline-danger {
+    color: var(--danger) !important;
+    background: rgba(239, 127, 145, .06) !important;
 }
 .btn-close {
     filter: none;
@@ -987,6 +991,22 @@ footer {
     font-weight: 700;
     margin-bottom: .8rem;
     box-shadow: 0 8px 24px rgba(82,111,242,.26), inset 0 1px 0 rgba(255,255,255,.2);
+}
+
+/* Bootstrap surface utilities */
+.bg-white,
+.bg-light {
+    background: var(--glass) !important;
+    color: var(--text) !important;
+}
+.bg-dark {
+    background: var(--nav-bg) !important;
+}
+
+.list-group-item {
+    background: var(--glass) !important;
+    color: var(--text) !important;
+    border-color: var(--glass-border) !important;
 }
 
 /* Generic utility */
