@@ -4,6 +4,7 @@
 
 let uploadedProjectId = null;
 let selectedZipFile = null;
+const MAX_ZIP_SIZE_BYTES = 200 * 1024 * 1024; // 200 MB
 
 document.addEventListener("DOMContentLoaded", () => {
     checkGeminiStatus();
@@ -33,6 +34,12 @@ function setupUploadZone() {
 function selectFile(file) {
     if (!file.name.toLowerCase().endsWith(".zip")) {
         showToast("Please select a .zip file", "error");
+        return;
+    }
+    if (file.size > MAX_ZIP_SIZE_BYTES) {
+        showToast("ZIP file exceeds the 200 MB upload limit.", "error");
+        selectedZipFile = null;
+        document.getElementById("selectedFile").classList.add("d-none");
         return;
     }
     selectedZipFile = file;
