@@ -10,6 +10,7 @@ A FastAPI application that safely ingests a project ZIP, builds a deterministic 
 - Markdown viewer, Markdown/PDF/JPG downloads, project history, and health/provider status endpoints.
 - PDF export creates a multi-page document; JPG export creates one high-resolution long image from the same generated Markdown.
 - Persistent documentation chat lets users propose precise edits, review them, apply them as new revisions, and navigate history with Undo/Redo.
+- The API chatbot loads the canonical `documentation-default-format` skill from `backend/skills/` and applies its scope, preservation, structure, styling, and validation rules to chat proposals.
 
 ## Setup
 Python 3.10+ is recommended.
