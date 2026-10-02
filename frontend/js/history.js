@@ -53,15 +53,25 @@ async function loadHistory() {
 }
 
 async function generateDoc(id) {
-    showAgentLoading();
+    const controller = new AbortController();
+    showLoading("Generating documentation with Gemini...", {
+        onCancel: () => controller.abort()
+    });
     try {
-        const result = await apiRequest(`/api/projects/${id}/generate`, { method: "POST" });
+        const result = await apiRequest(`/api/projects/${id}/generate`, {
+            method: "POST",
+            signal: controller.signal
+        });
         showToast(result.message || "Done!");
         window.location.href = `/documentation?id=${id}`;
     } catch (err) {
-        showToast(err.message, "error");
+        if (err?.name === "AbortError") {
+            showToast("Documentation generation stopped.", "error");
+        } else {
+            showToast(err.message, "error");
+        }
     } finally {
-        hideAgentLoading();
+        hideLoading();
     }
 }
 
