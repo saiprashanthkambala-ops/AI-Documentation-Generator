@@ -1,37 +1,83 @@
 # AI Documentation Generation and Maintenance Assistant
 
-A FastAPI application that safely ingests a project ZIP, builds a deterministic manifest and Python evidence, then asks Gemini to produce evidence-based Markdown documentation. Uploads are never executed.
+A FastAPI application that safely ingests a project ZIP, builds a deterministic manifest and Python evidence, and uses Gemini to produce evidence-based Markdown documentation. Uploaded source code is never executed.
 
 ## Features
 - Secure ZIP validation: size, file count, expansion, traversal, depth, and ignored build directories.
 - SHA-256 file manifest and Python AST evidence without executing source.
 - Server-side Gemini integration with bounded retries and controlled provider errors.
-- SQLite persistence for projects and documentation history; startup is non-destructive.
+- SQLite persistence for projects and documentation history.
 - Markdown viewer, download, project history, and health/provider status endpoints.
 
 ## Setup
 Python 3.10+ is recommended.
+
 ```bash
 python -m venv .venv
 . .venv/bin/activate  # Windows: .venv\\Scripts\\activate
 pip install -r requirements.txt
-cp .env.example .env
-# put your Gemini key in .env
+```
+
+## Gemini configuration
+
+This project uses the **Gemini API** for AI document generation. **Ollama is not required**.
+
+Keep the real API key outside the Git repository. Create:
+
+`secrets/gemini.env`
+
+using:
+
+`secrets/gemini.env.example`
+
+Example:
+
+```env
+GEMINI_API_KEY=your_real_key_here
+GEMINI_MODEL=gemini-3.8-flash
+GEMINI_API_TIMEOUT=120
+GEMINI_MAX_OUTPUT_TOKENS=8192
+```
+
+The `secrets/gemini.env` file is ignored by Git. Never put the real key into frontend JavaScript, HTML, or committed source files.
+
+Gemini 3.8 Flash is a current stable Gemini API model and is configured as the default provider model. citeturn622080search0turn622080search3
+
+## Run the application
+
+```bash
 uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ```
-Open http://localhost:8000. Gemini is optional for startup and health checks, but required for generation.
+
+Open http://localhost:8000.
+
+Gemini generation requires a valid API key and internet access. The rest of the application can start without the key.
+
+## Provider status
+
+Check:
+
+`GET /api/gemini/status`
+
+A configured installation reports the provider, model, and `Ready` status without exposing the API key.
 
 ## API
 `POST /api/upload`, `POST /api/projects/{id}/generate?doc_type=README`, `GET /api/projects`, `GET /api/projects/{id}`, `GET /api/projects/{id}/download`, `GET /api/projects/{id}/versions`, `GET /api/projects/{id}/documentation-versions`, `GET /api/projects/{id}/changes`, `GET /api/projects/{id}/change-reports`, `POST /api/projects/{id}/maintenance`, `GET /api/projects/{id}/documentation-diff/{version_id}`, `POST /api/projects/{id}/documentation/{version_id}/decision`, `GET /api/gemini/status`, and `GET /api/health`.
 
-## Migrations
-After installing dependencies, run `alembic upgrade head`. The baseline migration is additive and preserves existing data. For local development, application startup also creates missing tables non-destructively. `alembic downgrade base` is intentionally conservative: it updates migration bookkeeping but does not drop application tables or historical data.
-
 ## Testing
-Run `.venv/bin/pytest -q`. Tests cover manifest/hash analysis, impact mapping, ZIP traversal protection, and missing-Gemini-key behavior. A live Gemini test is intentionally not run unless `GEMINI_API_KEY` is configured.
+
+Run:
+
+```bash
+pytest -q
+```
+
+Tests mock the Gemini provider, so no real API key is included in automated test execution.
 
 ## Security and limitations
-The API key remains server-side and is not logged or stored. This is static analysis only: uploaded code is never run. Gemini context is bounded and unsupported languages receive deterministic manifest coverage; deeper maintenance/version comparison is represented in the data model and can be expanded with migrations.
+
+The Gemini API key remains server-side and is not committed to the repository. The browser never receives the provider credential. Uploaded source is statically analyzed and never executed. Gemini requests are made by the FastAPI backend and therefore require network access.
 
 ## Project structure
-`backend/config.py` configuration; `backend/services/zip_handler.py` safe ingestion; `backend/services/intelligence.py` manifest/evidence; `backend/services/gemini_service.py` provider boundary; `backend/database/` persistence; `frontend/` UI.
+
+`backend/config.py` configuration; `backend/services/zip_handler.py` safe ingestion; `backend/services/intelligence.py` manifest/evidence; `backend/services/gemini_service.py` Gemini provider boundary; `backend/database/` persistence; `frontend/` UI; `secrets/gemini.env.example` safe local configuration template.
