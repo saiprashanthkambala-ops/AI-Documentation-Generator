@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 venv/
 .env
+secrets/gemini.env
 
 # Database
 database/*.db
@@ -10,7 +11,7 @@ database/*.db
 # Uploads (user data)
 uploads/project_*/
 
-# Generated docs (optional - remove if you want to track them)
+# Generated docs
 docs/project_*/
 
 # IDE
