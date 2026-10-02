@@ -19,6 +19,19 @@ DEFAULT_THEME: dict[str, str] = {
     "code_text": "#e2e8f0",
 }
 
+ALTERNATE_THEME: dict[str, str] = {
+    "primary": "#0f766e",
+    "secondary": "#115e59",
+    "accent": "#14b8a6",
+    "text": "#1f2937",
+    "muted": "#4b5563",
+    "surface": "#f0fdfa",
+    "surface_alt": "#ccfbf1",
+    "border": "#99f6e4",
+    "code_bg": "#0f172a",
+    "code_text": "#e2e8f0",
+}
+
 THEME_KEYS = tuple(DEFAULT_THEME.keys())
 THEME_PATTERN = re.compile(r"^<!-- DOC_THEME:\s*(\{.*\})\s*-->\s*$", re.MULTILINE)
 HEX_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
@@ -52,6 +65,16 @@ def extract_theme(markdown: str) -> dict[str, str]:
 def strip_theme_metadata(markdown: str) -> str:
     """Remove the hidden theme comment before human-facing Markdown rendering."""
     return THEME_PATTERN.sub("", markdown, count=1).lstrip("\n")
+
+
+def ensure_distinct_theme(theme: Any, current_theme: Any) -> dict[str, str]:
+    """Return a validated theme that is visibly different from the current theme."""
+    candidate = normalize_theme(theme)
+    current = normalize_theme(current_theme)
+    if candidate != current:
+        return candidate
+    alternate = normalize_theme(ALTERNATE_THEME)
+    return alternate if alternate != current else dict(DEFAULT_THEME)
 
 
 def apply_theme(markdown: str, theme: Any) -> str:

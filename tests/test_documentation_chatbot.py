@@ -157,3 +157,11 @@ def test_style_document_rejects_missing_theme():
         assert "color theme" in str(exc)
     else:
         raise AssertionError("Expected missing theme to be rejected")
+
+
+
+def test_style_theme_is_not_silent_when_model_returns_current_palette():
+    from backend.services.document_theme import DEFAULT_THEME, ALTERNATE_THEME, ensure_distinct_theme
+
+    selected = ensure_distinct_theme(DEFAULT_THEME, DEFAULT_THEME)
+    assert selected == ALTERNATE_THEME
