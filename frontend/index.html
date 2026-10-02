@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Documentation Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/"><i class="bi bi-robot"></i> AI <span>Doc Assistant</span></a>
+        <div class="navbar-nav ms-auto flex-row gap-3 align-items-center">
+            <a class="nav-link active text-white" href="/">Home</a>
+            <a class="nav-link text-white-50" href="/upload">Upload</a>
+            <a class="nav-link text-white-50" href="/documentation">Documentation</a>
+            <a class="nav-link text-white-50" href="/history">History</a>
+            <a class="nav-link text-white-50" href="/maintenance">Maintenance</a>
+            <div id="geminiStatus" class="text-light ms-2"><span class="status-dot offline"></span><small>Checking...</small></div>
+        </div>
+    </div>
+</nav>
+
+<section class="hero">
+    <div class="container text-center">
+        <span class="badge bg-light text-primary mb-3 px-3 py-2">Fast Single-Pass AI</span>
+        <h1 class="fw-bold display-5">AI Documentation Assistant</h1>
+        <p class="lead mt-3 mx-auto" style="max-width:640px;">
+            Upload a Python project ZIP. One AI pass reads your code and writes
+            complete documentation in <strong>1–4 minutes</strong>.
+        </p>
+        <div class="d-flex gap-3 justify-content-center mt-4 flex-wrap">
+            <a href="/upload" class="btn btn-light btn-lg px-4"><i class="bi bi-cloud-upload"></i> Upload Project</a>
+            <a href="/history" class="btn btn-outline-light btn-lg px-4"><i class="bi bi-clock-history"></i> View History</a>
+        </div>
+    </div>
+</section>
+
+<main class="container mb-5">
+
+    <!-- What you get -->
+    <h2 class="h4 mb-4"><i class="bi bi-file-earmark-richtext text-primary"></i> What Gets Generated</h2>
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card feature-card p-4 text-center">
+                <div class="step-badge mx-auto">1</div>
+                <h5>Upload ZIP</h5>
+                <p class="text-muted mb-0">Zip your project and upload it.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card feature-card p-4 text-center">
+                <div class="step-badge mx-auto">2</div>
+                <h5>AI Writes Docs</h5>
+                <p class="text-muted mb-0">One fast Gemini pass — 1–4 minutes.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card feature-card p-4 text-center">
+                <div class="step-badge mx-auto">3</div>
+                <h5>Download</h5>
+                <p class="text-muted mb-0">View, copy, or download Markdown docs.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card feature-card p-4">
+                <h5><i class="bi bi-file-earmark-richtext text-primary"></i> Documentation Output</h5>
+                <ul class="text-muted mb-0">
+                    <li>1,500–3,000 words of clear prose documentation</li>
+                    <li>Architecture diagrams (Mermaid)</li>
+                    <li>Tables for APIs, tech stack, troubleshooting</li>
+                    <li>Per-file explanations (no raw code dumps)</li>
+                    <li>Installation &amp; usage guides</li>
+                    <li>GitHub-ready README section</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card feature-card p-4">
+                <h5><i class="bi bi-shield-lock text-success"></i> 100% Local & Private</h5>
+                <ul class="text-muted mb-0">
+                    <li>Gemini runs AI on your machine</li>
+                    <li>Code never leaves your computer</li>
+                    <li>Does NOT modify your repository</li>
+                    <li>No cloud, no vector database</li>
+                    <li>No authentication required</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer><div class="container">AI Documentation Assistant v2.1 &mdash; Gemini + FastAPI + SQLite</div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/api.js"></script>
+<script>document.addEventListener("DOMContentLoaded", checkGeminiStatus);</script>
+</body>
+</html>

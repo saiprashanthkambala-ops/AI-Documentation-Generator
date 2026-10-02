@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Project - AI Documentation Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/"><i class="bi bi-robot"></i> AI <span>Doc Assistant</span></a>
+        <div class="navbar-nav ms-auto flex-row gap-3 align-items-center">
+            <a class="nav-link text-white-50" href="/" data-page="home">Home</a>
+            <a class="nav-link active text-white" href="/upload" data-page="upload">Upload</a>
+            <a class="nav-link text-white-50" href="/documentation" data-page="docs">Documentation</a>
+            <a class="nav-link text-white-50" href="/history" data-page="history">History</a>
+            <div id="geminiStatus" class="text-light ms-2"><span class="status-dot offline"></span><small>Checking...</small></div>
+        </div>
+    </div>
+</nav>
+
+<section class="hero py-4">
+    <div class="container">
+        <h1 class="h2 fw-bold"><i class="bi bi-cloud-upload"></i> Upload Project</h1>
+        <p class="mb-0 opacity-75">Zip your Python project and upload it for documentation generation</p>
+    </div>
+</section>
+
+<main class="container mb-5" style="max-width: 700px;">
+    <div class="card border-0 shadow-sm p-4">
+        <form id="uploadForm">
+            <div class="mb-3">
+                <label for="projectName" class="form-label fw-semibold">Project Name *</label>
+                <input type="text" class="form-control form-control-lg" id="projectName"
+                       placeholder="e.g., My Flask App" required maxlength="200">
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Project ZIP File *</label>
+                <div id="uploadZone" class="upload-zone">
+                    <i class="bi bi-file-earmark-zip d-block mb-2"></i>
+                    <p class="fw-semibold mb-1">Drag &amp; drop your .zip file here</p>
+                    <small class="text-muted">or click to browse (max 20MB)</small>
+                    <input type="file" id="zipInput" accept=".zip" hidden>
+                    <div id="selectedFile" class="mt-2 text-primary fw-semibold d-none"></div>
+                </div>
+            </div>
+
+            <div class="mb-3"><label class="form-label fw-semibold" for="docType">Documentation type</label><select id="docType" class="form-select"><option>README</option><option>Project Overview</option><option>Setup Guide</option><option>API Documentation</option><option>Architecture Documentation</option><option>Developer Guide</option><option>Configuration Guide</option><option>Usage Guide</option><option>Deployment Guide</option><option>Troubleshooting Guide</option></select></div>
+
+            <div class="alert alert-info small">
+                <i class="bi bi-info-circle"></i>
+                <strong>Tip:</strong> Zip your project folder locally. We do not clone from GitHub.
+                Include .py, requirements.txt, and README files for best results.
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100" id="uploadBtn">
+                <i class="bi bi-upload"></i> Upload &amp; Extract Files
+            </button>
+        </form>
+    </div>
+
+    <!-- Post-upload actions (hidden until upload succeeds) -->
+    <div id="postUpload" class="card border-0 shadow-sm p-4 mt-4 d-none">
+        <h5 class="text-success"><i class="bi bi-check-circle"></i> Upload Successful!</h5>
+        <p id="uploadMessage" class="text-muted"></p>
+        <p><strong>Files found:</strong> <span id="fileCount"></span></p>
+        <p class="small text-muted" id="fileList"></p>
+        <div class="d-grid gap-2">
+            <button class="btn btn-primary btn-lg" id="generateBtn">
+                <i class="bi bi-stars"></i> Generate Documentation
+            </button>
+            <p class="text-muted small text-center mt-2 mb-0">Usually completes in 1–4 minutes</p>
+            <a href="/history" class="btn btn-outline-secondary">View in History</a>
+        </div>
+    </div>
+</main>
+
+<footer><div class="container">AI Documentation Assistant &mdash; Student Mini Project</div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/markdown.js"></script>
+<script src="/static/js/upload.js"></script>
+</body>
+</html>
