@@ -40,7 +40,6 @@ async def generate(prompt: str, system: str = "") -> str:
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
-            "temperature": 0.2,
             "maxOutputTokens": settings.GEMINI_MAX_OUTPUT_TOKENS,
         },
     }
