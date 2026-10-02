@@ -18,6 +18,8 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Paragraph, Preformatted, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from backend.services.document_theme import extract_theme, strip_theme_metadata
+
 
 class ExportError(ValueError):
     """Raised for invalid or unsupported export requests."""
@@ -206,18 +208,20 @@ def _pdf_fonts() -> tuple[str, str, str]:
 
 
 def markdown_to_pdf(markdown: str, document_name: str = "Documentation") -> bytes:
+    theme = extract_theme(markdown)
+    markdown = strip_theme_metadata(markdown)
     blocks = parse_markdown(markdown)
     if not blocks:
         raise ExportError("No documentation content is available to export.")
 
     font, bold, mono = _pdf_fonts()
     styles = getSampleStyleSheet()
-    body = ParagraphStyle("ExportBody", parent=styles["BodyText"], fontName=font, fontSize=10, leading=14.5, textColor=colors.HexColor("#243447"), spaceAfter=7)
-    h1 = ParagraphStyle("ExportH1", parent=body, fontName=bold, fontSize=20, leading=24, textColor=colors.HexColor("#1f2a44"), spaceBefore=10, spaceAfter=8)
-    h2 = ParagraphStyle("ExportH2", parent=body, fontName=bold, fontSize=15, leading=19, textColor=colors.HexColor("#324a73"), spaceBefore=12, spaceAfter=6)
+    body = ParagraphStyle("ExportBody", parent=styles["BodyText"], fontName=font, fontSize=10, leading=14.5, textColor=colors.HexColor(theme["text"]), spaceAfter=7)
+    h1 = ParagraphStyle("ExportH1", parent=body, fontName=bold, fontSize=20, leading=24, textColor=colors.HexColor(theme["primary"]), spaceBefore=10, spaceAfter=8)
+    h2 = ParagraphStyle("ExportH2", parent=body, fontName=bold, fontSize=15, leading=19, textColor=colors.HexColor(theme["secondary"]), spaceBefore=12, spaceAfter=6)
     h3 = ParagraphStyle("ExportH3", parent=body, fontName=bold, fontSize=12, leading=16, spaceBefore=9, spaceAfter=5)
-    quote = ParagraphStyle("ExportQuote", parent=body, leftIndent=12, borderPadding=7, backColor=colors.HexColor("#f4f7fb"), borderColor=colors.HexColor("#8aa4c4"), borderWidth=1, borderLeft=True)
-    code = ParagraphStyle("ExportCode", parent=body, fontName=mono, fontSize=7.8, leading=10, backColor=colors.HexColor("#101827"), textColor=colors.HexColor("#e2e8f0"), borderPadding=8)
+    quote = ParagraphStyle("ExportQuote", parent=body, leftIndent=12, borderPadding=7, backColor=colors.HexColor(theme["surface"]), borderColor=colors.HexColor(theme["accent"]), borderWidth=1, borderLeft=True)
+    code = ParagraphStyle("ExportCode", parent=body, fontName=mono, fontSize=7.8, leading=10, backColor=colors.HexColor(theme["code_bg"]), textColor=colors.HexColor(theme["code_text"]), borderPadding=8)
     bullet = ParagraphStyle("ExportBullet", parent=body, leftIndent=14, firstLineIndent=-9, spaceAfter=3)
     table_head = ParagraphStyle("ExportTableHead", parent=body, fontName=bold, fontSize=8.3, leading=10.5)
     table_body = ParagraphStyle("ExportTableBody", parent=body, fontSize=8, leading=10.5)
@@ -225,7 +229,7 @@ def markdown_to_pdf(markdown: str, document_name: str = "Documentation") -> byte
     title = document_name.strip() or "Documentation"
     story = [
         Paragraph(html.escape(title), ParagraphStyle("ExportTitle", parent=h1, alignment=TA_CENTER, fontSize=24, leading=28, spaceAfter=4)),
-        Paragraph("Generated documentation", ParagraphStyle("ExportSubtitle", parent=body, alignment=TA_CENTER, textColor=colors.HexColor("#64748b"), spaceAfter=16)),
+        Paragraph("Generated documentation", ParagraphStyle("ExportSubtitle", parent=body, alignment=TA_CENTER, textColor=colors.HexColor(theme["muted"]), spaceAfter=16)),
     ]
 
     for block in blocks:
@@ -251,8 +255,8 @@ def markdown_to_pdf(markdown: str, document_name: str = "Documentation") -> byte
             col_width = 168 * mm / max(1, len(block.rows[0]))
             table = Table(data, colWidths=[col_width] * len(block.rows[0]), repeatRows=1)
             table.setStyle(TableStyle([
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#eaf0f7")),
-                ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#c8d2df")),
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor(theme["surface_alt"])),
+                ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor(theme["border"])),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("LEFTPADDING", (0, 0), (-1, -1), 6),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 6),
@@ -273,10 +277,10 @@ def markdown_to_pdf(markdown: str, document_name: str = "Documentation") -> byte
     def footer(canvas, doc):
         canvas.saveState()
         width, height = A4
-        canvas.setStrokeColor(colors.HexColor("#d8e0ea"))
+        canvas.setStrokeColor(colors.HexColor(theme["border"]))
         canvas.line(18 * mm, height - 14 * mm, width - 18 * mm, height - 14 * mm)
         canvas.setFont(font, 7.5)
-        canvas.setFillColor(colors.HexColor("#64748b"))
+        canvas.setFillColor(colors.HexColor(theme["muted"]))
         canvas.drawString(18 * mm, height - 10.5 * mm, title[:80])
         canvas.drawRightString(width - 18 * mm, 10 * mm, f"Page {doc.page}")
         canvas.restoreState()
@@ -319,6 +323,8 @@ def _wrap(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.ImageFont, width
 
 
 def markdown_to_jpg(markdown: str, document_name: str = "Documentation", width: int = 1600) -> bytes:
+    theme = extract_theme(markdown)
+    markdown = strip_theme_metadata(markdown)
     blocks = parse_markdown(markdown)
     if not blocks:
         raise ExportError("No documentation content is available to export.")
@@ -364,11 +370,11 @@ def markdown_to_jpg(markdown: str, document_name: str = "Documentation", width: 
     title = document_name.strip() or "Documentation"
     y = pad
 
-    draw.text((pad, y), title, font=bold, fill="#1f2a44")
+    draw.text((pad, y), title, font=bold, fill=theme["primary"])
     y += bold_size + 20
-    draw.text((pad, y), "Generated documentation", font=regular, fill="#64748b")
+    draw.text((pad, y), "Generated documentation", font=regular, fill=theme["muted"])
     y += regular_size + 30
-    draw.line((pad, y, width - pad, y), fill="#c8d2df", width=3)
+    draw.line((pad, y, width - pad, y), fill=theme["border"], width=3)
     y += 30
 
     def paragraph(text: str, font, color: str, x: int = pad, max_width: int = content_width, prefix: str = "") -> None:
@@ -384,21 +390,21 @@ def markdown_to_jpg(markdown: str, document_name: str = "Documentation", width: 
         if block.kind == "heading":
             font = bold
             y += 14
-            paragraph(block.text, font, "#1f2a44" if block.level == 1 else "#324a73", max_width=content_width)
+            paragraph(block.text, font, theme["primary"] if block.level == 1 else theme["secondary"], max_width=content_width)
             draw.line((pad, y, width - pad, y), fill="#e0e6ee", width=2 if block.level == 1 else 1)
             y += 16
         elif block.kind == "paragraph":
-            paragraph(block.text, regular, "#243447")
+            paragraph(block.text, regular, theme["text"])
             y += 8
         elif block.kind == "list":
             for n, item in enumerate(block.items, 1):
-                paragraph(item, regular, "#243447", prefix=f"{n}." if block.ordered else "•")
+                paragraph(item, regular, theme["text"], prefix=f"{n}." if block.ordered else "•")
             y += 8
         elif block.kind == "quote":
             lines = _wrap(draw, _plain(block.text), regular, content_width - 40)
             height = len(lines) * (regular_size + 12) + 24
             top = y
-            draw.rounded_rectangle((pad, top, width - pad, top + height), radius=10, fill="#f4f7fb", outline="#8aa4c4", width=2)
+            draw.rounded_rectangle((pad, top, width - pad, top + height), radius=10, fill=theme["surface"], outline=theme["accent"], width=2)
             y += 12
             for line in lines:
                 draw.text((pad + 24, y), line, font=regular, fill="#52667f")
@@ -408,11 +414,11 @@ def markdown_to_jpg(markdown: str, document_name: str = "Documentation", width: 
             code_lines = block.text.splitlines() or [""]
             line_h = mono_size + 10
             box_h = len(code_lines) * line_h + 26
-            draw.rounded_rectangle((pad, y, width - pad, y + box_h), radius=10, fill="#101827")
+            draw.rounded_rectangle((pad, y, width - pad, y + box_h), radius=10, fill=theme["code_bg"])
             y += 13
             for line in code_lines:
                 for wrapped in _wrap(draw, line, mono, content_width - 20):
-                    draw.text((pad + 12, y), wrapped, font=mono, fill="#e2e8f0")
+                    draw.text((pad + 12, y), wrapped, font=mono, fill=theme["code_text"])
                     y += line_h
             y += 24
         elif block.kind == "table" and block.rows:
@@ -424,17 +430,17 @@ def markdown_to_jpg(markdown: str, document_name: str = "Documentation", width: 
                     for cell in row
                 ]
                 row_h = max(len(lines) for lines in cell_lines) * (regular_size + 7) + 20
-                fill = "#eaf0f7" if row_index == 0 else "#ffffff"
-                draw.rectangle((pad, y, width - pad, y + row_h), fill=fill, outline="#c8d2df")
+                fill = theme["surface_alt"] if row_index == 0 else theme["surface"]
+                draw.rectangle((pad, y, width - pad, y + row_h), fill=fill, outline=theme["border"])
                 for col_index, lines in enumerate(cell_lines):
                     x = pad + col_index * col_width + 12
                     yy = y + 8
                     for line in lines:
-                        draw.text((x, yy), line, font=bold if row_index == 0 else regular, fill="#1f2a44")
+                        draw.text((x, yy), line, font=bold if row_index == 0 else regular, fill=theme["primary"] if row_index == 0 else theme["text"])
                         yy += regular_size + 7
-                    draw.line((pad + col_index * col_width, y, pad + col_index * col_width, y + row_h), fill="#c8d2df")
+                    draw.line((pad + col_index * col_width, y, pad + col_index * col_width, y + row_h), fill=theme["border"])
                 y += row_h
-            draw.line((pad + cols * col_width, y - sum(0 for _ in []), pad + cols * col_width, y), fill="#c8d2df")
+            draw.line((pad + cols * col_width, y - sum(0 for _ in []), pad + cols * col_width, y), fill=theme["border"])
             y += 22
         else:
             y += 20

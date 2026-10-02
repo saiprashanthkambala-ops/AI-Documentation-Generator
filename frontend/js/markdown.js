@@ -4,7 +4,7 @@
 
 function markdownToHtml(md) {
     if (!md) return "";
-    let html = md;
+    let html = md.replace(/^\s*<!--\s*DOC_THEME:\s*\{.*\}\s*-->\s*/m, "");
 
     html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
         `<pre><code class="language-${lang || 'text'}">${escapeHtml(code.trim())}</code></pre>`

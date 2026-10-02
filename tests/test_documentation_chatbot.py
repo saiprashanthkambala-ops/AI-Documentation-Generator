@@ -112,3 +112,48 @@ def test_rewrite_document_rejects_non_markdown():
         assert "Markdown with a heading" in str(exc)
     else:
         raise AssertionError("Expected invalid full-document proposal to be rejected")
+
+
+
+def test_style_document_adds_theme_metadata_without_changing_text():
+    original = "# Crime Analysis\n\n## Problem Statement\n\nInvestigators need connected evidence."
+    updated, change = apply_proposal(
+        original,
+        {
+            "operation": "STYLE_DOCUMENT",
+            "target": "",
+            "replacement": "",
+            "theme": {
+                "primary": "#123456",
+                "secondary": "#234567",
+                "accent": "#345678",
+                "text": "#456789",
+                "muted": "#56789a",
+                "surface": "#f4f7fb",
+                "surface_alt": "#eaf0f7",
+                "border": "#c8d2df",
+                "code_bg": "#101827",
+                "code_text": "#e2e8f0",
+            },
+        },
+    )
+    assert "Crime Analysis" in updated
+    assert "Investigators need connected evidence." in updated
+    assert "DOC_THEME:" in updated
+    assert change["operation"] == "STYLE_DOCUMENT"
+
+
+def test_style_document_rejects_missing_theme():
+    try:
+        apply_proposal(
+            "# Doc",
+            {
+                "operation": "STYLE_DOCUMENT",
+                "target": "",
+                "replacement": "",
+            },
+        )
+    except ValueError as exc:
+        assert "color theme" in str(exc)
+    else:
+        raise AssertionError("Expected missing theme to be rejected")
