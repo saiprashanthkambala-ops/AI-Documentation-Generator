@@ -280,7 +280,7 @@ def markdown_to_pdf(markdown: str, document_name: str = "Documentation") -> byte
         canvas.setStrokeColor(colors.HexColor(theme["border"]))
         canvas.line(18 * mm, height - 14 * mm, width - 18 * mm, height - 14 * mm)
         canvas.setFont(font, 7.5)
-        canvas.setFillColor(colors.HexColor("#64748b"))
+        canvas.setFillColor(colors.HexColor(theme["muted"]))
         canvas.drawString(18 * mm, height - 10.5 * mm, title[:80])
         canvas.drawRightString(width - 18 * mm, 10 * mm, f"Page {doc.page}")
         canvas.restoreState()
@@ -370,11 +370,11 @@ def markdown_to_jpg(markdown: str, document_name: str = "Documentation", width: 
     title = document_name.strip() or "Documentation"
     y = pad
 
-    draw.text((pad, y), title, font=bold, fill="#1f2a44")
+    draw.text((pad, y), title, font=bold, fill=theme["primary"])
     y += bold_size + 20
-    draw.text((pad, y), "Generated documentation", font=regular, fill="#64748b")
+    draw.text((pad, y), "Generated documentation", font=regular, fill=theme["muted"])
     y += regular_size + 30
-    draw.line((pad, y, width - pad, y), fill="#c8d2df", width=3)
+    draw.line((pad, y, width - pad, y), fill=theme["border"], width=3)
     y += 30
 
     def paragraph(text: str, font, color: str, x: int = pad, max_width: int = content_width, prefix: str = "") -> None:
@@ -390,21 +390,21 @@ def markdown_to_jpg(markdown: str, document_name: str = "Documentation", width: 
         if block.kind == "heading":
             font = bold
             y += 14
-            paragraph(block.text, font, "#1f2a44" if block.level == 1 else "#324a73", max_width=content_width)
+            paragraph(block.text, font, theme["primary"] if block.level == 1 else theme["secondary"], max_width=content_width)
             draw.line((pad, y, width - pad, y), fill="#e0e6ee", width=2 if block.level == 1 else 1)
             y += 16
         elif block.kind == "paragraph":
-            paragraph(block.text, regular, "#243447")
+            paragraph(block.text, regular, theme["text"])
             y += 8
         elif block.kind == "list":
             for n, item in enumerate(block.items, 1):
-                paragraph(item, regular, "#243447", prefix=f"{n}." if block.ordered else "•")
+                paragraph(item, regular, theme["text"], prefix=f"{n}." if block.ordered else "•")
             y += 8
         elif block.kind == "quote":
             lines = _wrap(draw, _plain(block.text), regular, content_width - 40)
             height = len(lines) * (regular_size + 12) + 24
             top = y
-            draw.rounded_rectangle((pad, top, width - pad, top + height), radius=10, fill="#f4f7fb", outline="#8aa4c4", width=2)
+            draw.rounded_rectangle((pad, top, width - pad, top + height), radius=10, fill=theme["surface"], outline=theme["accent"], width=2)
             y += 12
             for line in lines:
                 draw.text((pad + 24, y), line, font=regular, fill="#52667f")
@@ -414,11 +414,11 @@ def markdown_to_jpg(markdown: str, document_name: str = "Documentation", width: 
             code_lines = block.text.splitlines() or [""]
             line_h = mono_size + 10
             box_h = len(code_lines) * line_h + 26
-            draw.rounded_rectangle((pad, y, width - pad, y + box_h), radius=10, fill="#101827")
+            draw.rounded_rectangle((pad, y, width - pad, y + box_h), radius=10, fill=theme["code_bg"])
             y += 13
             for line in code_lines:
                 for wrapped in _wrap(draw, line, mono, content_width - 20):
-                    draw.text((pad + 12, y), wrapped, font=mono, fill="#e2e8f0")
+                    draw.text((pad + 12, y), wrapped, font=mono, fill=theme["code_text"])
                     y += line_h
             y += 24
         elif block.kind == "table" and block.rows:
@@ -430,17 +430,17 @@ def markdown_to_jpg(markdown: str, document_name: str = "Documentation", width: 
                     for cell in row
                 ]
                 row_h = max(len(lines) for lines in cell_lines) * (regular_size + 7) + 20
-                fill = "#eaf0f7" if row_index == 0 else "#ffffff"
-                draw.rectangle((pad, y, width - pad, y + row_h), fill=fill, outline="#c8d2df")
+                fill = theme["surface_alt"] if row_index == 0 else theme["surface"]
+                draw.rectangle((pad, y, width - pad, y + row_h), fill=fill, outline=theme["border"])
                 for col_index, lines in enumerate(cell_lines):
                     x = pad + col_index * col_width + 12
                     yy = y + 8
                     for line in lines:
-                        draw.text((x, yy), line, font=bold if row_index == 0 else regular, fill="#1f2a44")
+                        draw.text((x, yy), line, font=bold if row_index == 0 else regular, fill=theme["primary"] if row_index == 0 else theme["text"])
                         yy += regular_size + 7
-                    draw.line((pad + col_index * col_width, y, pad + col_index * col_width, y + row_h), fill="#c8d2df")
+                    draw.line((pad + col_index * col_width, y, pad + col_index * col_width, y + row_h), fill=theme["border"])
                 y += row_h
-            draw.line((pad + cols * col_width, y - sum(0 for _ in []), pad + cols * col_width, y), fill="#c8d2df")
+            draw.line((pad + cols * col_width, y - sum(0 for _ in []), pad + cols * col_width, y), fill=theme["border"])
             y += 22
         else:
             y += 20
