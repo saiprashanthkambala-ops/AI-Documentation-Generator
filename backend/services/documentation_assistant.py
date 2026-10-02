@@ -112,7 +112,16 @@ async def propose_change(
         f"{_conversation_text(conversation)}\n\n"
         "Prepare the best safe response to the latest user message."
     )
-    parsed = _extract_json(await generate(prompt, SYSTEM_PROMPT))
+    # Chat is primarily an instruction-following task. Gemini documents the
+    # LOW thinking level as the latency/cost-oriented setting for chat.
+    parsed = _extract_json(
+        await generate(
+            prompt,
+            SYSTEM_PROMPT,
+            thinking_level="low",
+            max_output_tokens=4096,
+        )
+    )
     if parsed is None:
         return {
             "reply": "I understood your request, but I could not prepare a safe structured change. Please try again.",
