@@ -86,7 +86,6 @@ def _normalize(data: dict[str, Any]) -> dict[str, Any]:
     target = str(data.get("target", ""))
     replacement = str(data.get("replacement", ""))
     theme = data.get("theme") if isinstance(data.get("theme"), dict) else {}
-    theme = data.get("theme") if isinstance(data.get("theme"), dict) else {}
     if operation == "NO_CHANGE":
         target = ""
         replacement = ""
