@@ -8,8 +8,7 @@ from typing import Any
 
 from backend.config import settings
 from backend.services.gemini_service import generate
-from backend.services.document_theme import DEFAULT_THEME
-from backend.services.document_theme import apply_theme
+from backend.services.document_theme import apply_theme, ensure_distinct_theme, extract_theme
 from backend.services.zip_handler import get_file_tree, read_source_files
 
 
@@ -156,7 +155,13 @@ async def propose_change(
             "target": "",
             "replacement": "",
         }
-    return _normalize(parsed)
+    result = _normalize(parsed)
+    if result["operation"] == "STYLE_DOCUMENT":
+        result["theme"] = ensure_distinct_theme(
+            result.get("theme", {}),
+            extract_theme(current_document),
+        )
+    return result
 
 
 def apply_proposal(
