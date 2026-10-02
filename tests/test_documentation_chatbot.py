@@ -215,3 +215,23 @@ def test_ui_contract_supports_upload_cancellation_and_equal_home_cards():
     assert "controller.abort()" in upload
     assert "step-card-row" in style
     assert "grid-template-columns: repeat(3" in style
+
+
+def test_ui_precision_contract():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    home = (root / "frontend" / "index.html").read_text(encoding="utf-8")
+    style = (root / "frontend" / "css" / "style.css").read_text(encoding="utf-8")
+    upload = (root / "frontend" / "js" / "upload.js").read_text(encoding="utf-8")
+
+    assert home.count('class="card feature-card step-card p-4 text-center"') == 3
+    assert ".chat-message.user .chat-bubble" in style
+    assert "width: fit-content" in style
+    assert ".step-card-row" in style
+    assert "grid-template-columns: 1fr" in style
+    assert 'showLoading("Uploading and extracting files..."' in upload
+    assert "controller.abort()" in upload
+    assert "signal: controller.signal" in upload
+    assert 'background-image:' in style
+    assert "body[data-theme=\"light\"] .card" in style
