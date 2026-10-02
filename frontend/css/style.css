@@ -201,31 +201,31 @@ body {
 .doc-preview h1 {
     font-size: 2rem;
     font-weight: 800;
-    border-bottom: 3px solid var(--primary);
+    border-bottom: 3px solid var(--doc-primary, var(--primary));
     padding-bottom: 0.5rem;
     margin-bottom: 1.5rem;
 }
 .doc-preview h2 {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--primary-dark);
+    color: var(--doc-secondary, var(--primary-dark));
     margin-top: 2.5rem;
     padding-bottom: 0.35rem;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--doc-border, var(--border));
 }
 .doc-preview h3 {
     font-size: 1.15rem;
     font-weight: 600;
     margin-top: 1.75rem;
-    color: var(--text);
+    color: var(--doc-text, var(--text));
 }
 .doc-preview blockquote {
-    border-left: 4px solid var(--primary);
+    border-left: 4px solid var(--doc-accent, var(--primary));
     padding: 0.75rem 1.25rem;
     margin: 1rem 0;
-    background: #f8fafc;
+    background: var(--doc-surface, #f8fafc);
     border-radius: 0 8px 8px 0;
-    color: var(--text-muted);
+    color: var(--doc-muted, var(--text-muted));
 }
 .doc-preview table {
     width: 100%;
@@ -234,7 +234,7 @@ body {
     font-size: 0.875rem;
 }
 .doc-preview th {
-    background: #eef2ff;
+    background: var(--doc-surface-alt, #eef2ff);
     padding: 0.6rem 1rem;
     text-align: left;
     font-weight: 600;
