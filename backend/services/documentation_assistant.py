@@ -171,18 +171,6 @@ def apply_proposal(
         raise ValueError("There is no applicable change in this assistant response.")
 
     if operation == "STYLE_DOCUMENT":
-        from backend.services.document_theme import apply_theme
-        theme = proposal.get("theme")
-        if not isinstance(theme, dict):
-            raise ValueError("The assistant did not provide a valid document color theme.")
-        updated = apply_theme(markdown, theme)
-        return updated, {
-            "operation": operation,
-            "target": "",
-            "replacement": "",
-        }
-
-    if operation == "STYLE_DOCUMENT":
         theme = proposal.get("theme")
         if not isinstance(theme, dict):
             raise ValueError("The assistant did not provide a valid document color theme.")
