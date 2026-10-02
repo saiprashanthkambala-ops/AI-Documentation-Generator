@@ -26,9 +26,9 @@ class Settings(BaseSettings):
     UPLOADS_DIR: Path = BASE_DIR / "uploads"
     DOCS_DIR: Path = BASE_DIR / "docs"
 
-    MAX_ZIP_SIZE_MB: int = 20
+    MAX_ZIP_SIZE_MB: int = 200
     MAX_ZIP_FILES: int = 2000
-    MAX_EXTRACTED_SIZE_MB: int = 100
+    MAX_EXTRACTED_SIZE_MB: int = 200
     MAX_CONTEXT_CHARS: int = 30000
     MAX_LINES_PER_FILE: int = 160
 

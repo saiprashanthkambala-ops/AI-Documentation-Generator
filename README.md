@@ -3,7 +3,7 @@
 A FastAPI application that safely ingests a project ZIP, builds a deterministic manifest and Python evidence, and uses Gemini to produce evidence-based Markdown documentation. Uploaded source code is never executed.
 
 ## Features
-- Secure ZIP validation: size, file count, expansion, traversal, depth, and ignored build directories.
+- Secure ZIP validation: up to 200 MB upload size, up to 200 MB extracted project size, file count, expansion, traversal, depth, and ignored build directories.
 - SHA-256 file manifest and Python AST evidence without executing source.
 - Server-side Gemini integration with bounded retries and controlled provider errors.
 - SQLite persistence for projects and documentation history.
