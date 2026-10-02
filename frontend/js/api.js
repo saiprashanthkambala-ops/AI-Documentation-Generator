@@ -25,7 +25,13 @@ async function apiRequest(url, options = {}) {
         if (ct.includes("application/json")) {
             try {
                 const err = JSON.parse(await response.text());
-                msg = err.detail || msg;
+                const detail = err.detail;
+                if (detail && typeof detail === "object") {
+                    const code = detail.code ? String(detail.code) + ": " : "";
+                    msg = code + (detail.message || "Request failed");
+                } else if (detail) {
+                    msg = String(detail);
+                }
             } catch (e) { /* not json */ }
         }
         throw new Error(msg);
