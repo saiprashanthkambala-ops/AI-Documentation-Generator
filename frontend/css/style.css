@@ -1828,3 +1828,37 @@ body[data-theme="dark"] .history-row td {
         height: 160px;
     }
 }
+
+
+/* Homepage: force the three process cards to identical width, height, and alignment. */
+.step-card-row {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+.step-card-row > [class*="col-"] {
+    width: auto !important;
+    max-width: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin: 0 !important;
+}
+.step-card-row .step-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 184px !important;
+    min-height: 184px !important;
+    margin: 0 !important;
+}
+@media (max-width: 767px) {
+    .step-card-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    .step-card-row .step-card {
+        height: auto !important;
+        min-height: 160px !important;
+    }
+}
