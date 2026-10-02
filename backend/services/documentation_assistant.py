@@ -9,6 +9,7 @@ from typing import Any
 from backend.config import settings
 from backend.services.gemini_service import generate
 from backend.services.document_theme import DEFAULT_THEME
+from backend.services.document_theme import apply_theme
 from backend.services.zip_handler import get_file_tree, read_source_files
 
 
@@ -29,6 +30,9 @@ Natural conversation rules:
 - "make the document smaller", "shorten it", "reduce the content", "make it concise" => REWRITE_DOCUMENT.
 - "humanize it", "make it more natural", "make it easier to read" => REWRITE_DOCUMENT.
 - "change the colours", "change the colors", "make it more colorful", "try a different colour theme" => STYLE_DOCUMENT.
+- A short follow-up such as "try" should use the immediately preceding styling request in the recent chat context and choose a professional accessible palette when no exact colors were provided.
+- STYLE_DOCUMENT changes presentation only; it must preserve the document wording and structure. Return a "theme" object with these hex keys: primary, secondary, accent, text, muted, surface, surface_alt, border, code_bg, code_text.
+- "change the colours", "change the colors", "make it more colorful", "try a different colour theme" => STYLE_DOCUMENT.
 - A short follow-up such as "try" should use the immediately preceding styling request in the conversation and choose a professional accessible palette when no exact colors were provided.
 - STYLE_DOCUMENT changes presentation only; it must preserve the document wording and structure. Return a "theme" object with these hex keys: primary, secondary, accent, text, muted, surface, surface_alt, border, code_bg, code_text.
 - When the user asks for a whole-document transformation, target MUST be empty and replacement MUST be the COMPLETE revised Markdown document.
@@ -36,6 +40,7 @@ Natural conversation rules:
 - Do not ask the user to specify a section when the requested transformation clearly applies to the entire document.
 - For a document-size request, interpret "size" from context: usually content length/detail, not page dimensions. Do not change PDF paper size unless explicitly requested.
 - "change the project name X into Y" => use REPLACE_TEXT or RENAME_HEADING with an exact current target.
+- For STYLE_DOCUMENT, target MUST be empty and replacement MUST be empty; return only the requested theme palette.
 - For STYLE_DOCUMENT, target MUST be empty and replacement MUST be empty; return only the requested theme palette.
 - Copy target EXACTLY from the current documentation for operations that require a target.
 - Never invent target text.
@@ -77,6 +82,7 @@ def _normalize(data: dict[str, Any]) -> dict[str, Any]:
         operation = "NO_CHANGE"
     target = str(data.get("target", ""))
     replacement = str(data.get("replacement", ""))
+    theme = data.get("theme") if isinstance(data.get("theme"), dict) else {}
     theme = data.get("theme") if isinstance(data.get("theme"), dict) else {}
     if operation == "NO_CHANGE":
         target = ""
@@ -164,6 +170,17 @@ def apply_proposal(
 
     if operation == "STYLE_DOCUMENT":
         from backend.services.document_theme import apply_theme
+        theme = proposal.get("theme")
+        if not isinstance(theme, dict):
+            raise ValueError("The assistant did not provide a valid document color theme.")
+        updated = apply_theme(markdown, theme)
+        return updated, {
+            "operation": operation,
+            "target": "",
+            "replacement": "",
+        }
+
+    if operation == "STYLE_DOCUMENT":
         theme = proposal.get("theme")
         if not isinstance(theme, dict):
             raise ValueError("The assistant did not provide a valid document color theme.")
