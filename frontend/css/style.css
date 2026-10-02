@@ -30,8 +30,27 @@ body {
     background: linear-gradient(90deg, #1e1b4b, #312e81) !important;
     box-shadow: var(--shadow);
 }
-.navbar-brand { font-weight: 700; font-size: 1.15rem; }
+.navbar-brand { font-weight: 700; font-size: 1.15rem; display: inline-flex; align-items: center; }
 .navbar-brand span { color: var(--primary-light); }
+.brand-logo {
+    height: 32px;
+    width: auto;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+.hero-brand-logo {
+    height: 72px;
+    width: auto;
+    object-fit: contain;
+}
+@media (max-width: 576px) {
+    .brand-logo {
+        height: 28px;
+    }
+    .hero-brand-logo {
+        height: 56px;
+    }
+}
 .nav-link { font-size: 0.9rem; transition: color 0.2s; }
 .nav-link:hover { color: white !important; }
 .nav-link.active { color: white !important; font-weight: 600; }
