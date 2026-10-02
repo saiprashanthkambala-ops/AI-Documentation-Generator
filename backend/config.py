@@ -15,8 +15,11 @@ class Settings(BaseSettings):
 
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-3.8-flash"
+    GEMINI_FALLBACK_MODEL: str = "gemini-3.5-flash-lite"
     GEMINI_API_TIMEOUT: float = 120.0
     GEMINI_MAX_OUTPUT_TOKENS: int = 8192
+    GEMINI_MAX_RETRIES: int = 2
+    GEMINI_RETRY_BASE_DELAY: float = 1.0
 
     DATABASE_URL: str = f"sqlite:///{(BASE_DIR / 'database' / 'app.db').as_posix()}"
     DATABASE_DIR: Path = BASE_DIR / "database"
