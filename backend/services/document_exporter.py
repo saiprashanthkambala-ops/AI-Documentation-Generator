@@ -18,6 +18,8 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Paragraph, Preformatted, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from backend.services.document_theme import extract_theme, strip_theme_metadata
+
 
 class ExportError(ValueError):
     """Raised for invalid or unsupported export requests."""
@@ -206,18 +208,20 @@ def _pdf_fonts() -> tuple[str, str, str]:
 
 
 def markdown_to_pdf(markdown: str, document_name: str = "Documentation") -> bytes:
+    theme = extract_theme(markdown)
+    markdown = strip_theme_metadata(markdown)
     blocks = parse_markdown(markdown)
     if not blocks:
         raise ExportError("No documentation content is available to export.")
 
     font, bold, mono = _pdf_fonts()
     styles = getSampleStyleSheet()
-    body = ParagraphStyle("ExportBody", parent=styles["BodyText"], fontName=font, fontSize=10, leading=14.5, textColor=colors.HexColor("#243447"), spaceAfter=7)
-    h1 = ParagraphStyle("ExportH1", parent=body, fontName=bold, fontSize=20, leading=24, textColor=colors.HexColor("#1f2a44"), spaceBefore=10, spaceAfter=8)
-    h2 = ParagraphStyle("ExportH2", parent=body, fontName=bold, fontSize=15, leading=19, textColor=colors.HexColor("#324a73"), spaceBefore=12, spaceAfter=6)
+    body = ParagraphStyle("ExportBody", parent=styles["BodyText"], fontName=font, fontSize=10, leading=14.5, textColor=colors.HexColor(theme["text"]), spaceAfter=7)
+    h1 = ParagraphStyle("ExportH1", parent=body, fontName=bold, fontSize=20, leading=24, textColor=colors.HexColor(theme["primary"]), spaceBefore=10, spaceAfter=8)
+    h2 = ParagraphStyle("ExportH2", parent=body, fontName=bold, fontSize=15, leading=19, textColor=colors.HexColor(theme["secondary"]), spaceBefore=12, spaceAfter=6)
     h3 = ParagraphStyle("ExportH3", parent=body, fontName=bold, fontSize=12, leading=16, spaceBefore=9, spaceAfter=5)
-    quote = ParagraphStyle("ExportQuote", parent=body, leftIndent=12, borderPadding=7, backColor=colors.HexColor("#f4f7fb"), borderColor=colors.HexColor("#8aa4c4"), borderWidth=1, borderLeft=True)
-    code = ParagraphStyle("ExportCode", parent=body, fontName=mono, fontSize=7.8, leading=10, backColor=colors.HexColor("#101827"), textColor=colors.HexColor("#e2e8f0"), borderPadding=8)
+    quote = ParagraphStyle("ExportQuote", parent=body, leftIndent=12, borderPadding=7, backColor=colors.HexColor(theme["surface"]), borderColor=colors.HexColor(theme["accent"]), borderWidth=1, borderLeft=True)
+    code = ParagraphStyle("ExportCode", parent=body, fontName=mono, fontSize=7.8, leading=10, backColor=colors.HexColor(theme["code_bg"]), textColor=colors.HexColor(theme["code_text"]), borderPadding=8)
     bullet = ParagraphStyle("ExportBullet", parent=body, leftIndent=14, firstLineIndent=-9, spaceAfter=3)
     table_head = ParagraphStyle("ExportTableHead", parent=body, fontName=bold, fontSize=8.3, leading=10.5)
     table_body = ParagraphStyle("ExportTableBody", parent=body, fontSize=8, leading=10.5)
@@ -225,7 +229,7 @@ def markdown_to_pdf(markdown: str, document_name: str = "Documentation") -> byte
     title = document_name.strip() or "Documentation"
     story = [
         Paragraph(html.escape(title), ParagraphStyle("ExportTitle", parent=h1, alignment=TA_CENTER, fontSize=24, leading=28, spaceAfter=4)),
-        Paragraph("Generated documentation", ParagraphStyle("ExportSubtitle", parent=body, alignment=TA_CENTER, textColor=colors.HexColor("#64748b"), spaceAfter=16)),
+        Paragraph("Generated documentation", ParagraphStyle("ExportSubtitle", parent=body, alignment=TA_CENTER, textColor=colors.HexColor(theme["muted"]), spaceAfter=16)),
     ]
 
     for block in blocks:
@@ -251,8 +255,8 @@ def markdown_to_pdf(markdown: str, document_name: str = "Documentation") -> byte
             col_width = 168 * mm / max(1, len(block.rows[0]))
             table = Table(data, colWidths=[col_width] * len(block.rows[0]), repeatRows=1)
             table.setStyle(TableStyle([
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#eaf0f7")),
-                ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#c8d2df")),
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor(theme["surface_alt"])),
+                ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor(theme["border"])),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("LEFTPADDING", (0, 0), (-1, -1), 6),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 6),
@@ -273,7 +277,7 @@ def markdown_to_pdf(markdown: str, document_name: str = "Documentation") -> byte
     def footer(canvas, doc):
         canvas.saveState()
         width, height = A4
-        canvas.setStrokeColor(colors.HexColor("#d8e0ea"))
+        canvas.setStrokeColor(colors.HexColor(theme["border"]))
         canvas.line(18 * mm, height - 14 * mm, width - 18 * mm, height - 14 * mm)
         canvas.setFont(font, 7.5)
         canvas.setFillColor(colors.HexColor("#64748b"))
@@ -319,6 +323,8 @@ def _wrap(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.ImageFont, width
 
 
 def markdown_to_jpg(markdown: str, document_name: str = "Documentation", width: int = 1600) -> bytes:
+    theme = extract_theme(markdown)
+    markdown = strip_theme_metadata(markdown)
     blocks = parse_markdown(markdown)
     if not blocks:
         raise ExportError("No documentation content is available to export.")
