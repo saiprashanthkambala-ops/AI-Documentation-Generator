@@ -8,6 +8,7 @@ from typing import Any
 
 from backend.config import settings
 from backend.services.gemini_service import generate
+from backend.services.skill_loader import load_documentation_default_format_skill
 from backend.services.document_theme import apply_theme, ensure_distinct_theme, extract_theme
 from backend.services.zip_handler import get_file_tree, read_source_files
 
@@ -52,7 +53,7 @@ Natural conversation rules:
 - For factual additions, use only the supplied source evidence.
 - NO_CHANGE is appropriate only when the request is genuinely impossible, unsafe, or lacks enough context to perform the requested transformation.
 - Do not output JSON inside Markdown fences.
-""".strip()
+""".strip() + "\n\n--- ACTIVE DOCUMENTATION SKILL ---\n" + load_documentation_default_format_skill() + "\n--- END ACTIVE DOCUMENTATION SKILL ---"
 
 
 def _extract_json(raw: str) -> dict[str, Any] | None:
