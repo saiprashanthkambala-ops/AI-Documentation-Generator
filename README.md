@@ -41,7 +41,7 @@ GEMINI_MAX_OUTPUT_TOKENS=8192
 
 The `secrets/gemini.env` file is ignored by Git. Never put the real key into frontend JavaScript, HTML, or committed source files.
 
-Gemini 3.8 Flash is a current stable Gemini API model and is configured as the default provider model. citeturn622080search0turn622080search3
+Gemini 3.8 Flash is a current stable Gemini API model and is configured as the default provider model.
 
 ## Run the application
 
