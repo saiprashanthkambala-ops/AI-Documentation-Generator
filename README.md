@@ -48,10 +48,12 @@ Gemini 3.8 Flash is a current stable Gemini API model and is configured as the d
 ## Run the application
 
 ```bash
-uvicorn backend.main:app --host 0.0.0.0 --port 8000
+run.bat
+# or
+venv\Scripts\python.exe -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
 ```
 
-Open http://localhost:8000.
+Open http://127.0.0.1:8000 or http://localhost:8000.
 
 Gemini generation requires a valid API key and internet access. The rest of the application can start without the key.
 

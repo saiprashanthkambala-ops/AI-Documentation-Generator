@@ -10,7 +10,7 @@ def validate_zip(path,size):
         if total>settings.MAX_EXTRACTED_SIZE_MB*1024*1024:return False,'Extracted project exceeds size limit'
         for i in z.infolist():
             p=Path(i.filename)
-            if p.is_absolute() or '..' in p.parts:return False,'ZIP contains an unsafe path'
+            if p.is_absolute() or i.filename.startswith(('/', '\\')) or '..' in p.parts or p.drive:return False,'ZIP contains an unsafe path'
             if len(p.parts)>20:return False,'ZIP directory depth is excessive'
     return True,''
 def extract_zip(zip_path,extract_to):
