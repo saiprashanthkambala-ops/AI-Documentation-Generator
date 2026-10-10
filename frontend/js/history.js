@@ -12,6 +12,7 @@ async function loadHistory() {
     const empty = document.getElementById("emptyHistory");
 
     try {
+    
         const projects = await apiRequest("/api/projects");
 
         if (projects.length === 0) {
