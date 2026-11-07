@@ -8,6 +8,8 @@ import shutil
 import json
 import difflib
 import time
+import asyncio
+from typing import Any
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, Query
@@ -33,10 +35,9 @@ from backend.services.revision_service import create_revision, current_revision
 
 router = APIRouter(prefix="/api", tags=["Projects"])
 
-# Per-process progress state for active generation requests. The percentage is
-# stage-based; the UI labels its in-between interpolation as estimated because
-# Gemini's generateContent REST call does not expose token-level progress.
+# Per-process progress state for active generation requests.
 _GENERATION_PROGRESS: dict[int, dict] = {}
+_CANCEL_EVENTS: dict[int, asyncio.Event] = {}
 
 
 def _set_generation_progress(
@@ -46,15 +47,19 @@ def _set_generation_progress(
     status: str = "running",
     *,
     reset: bool = False,
+    metrics: dict[str, Any] | None = None,
 ) -> None:
     previous = _GENERATION_PROGRESS.get(project_id, {})
     started_at = time.monotonic() if reset or not previous else previous.get("started_at", time.monotonic())
-    _GENERATION_PROGRESS[project_id] = {
+    entry = {
         "status": status,
         "progress": max(0, min(100, int(progress))),
         "stage": stage,
         "started_at": started_at,
     }
+    if metrics is not None or "metrics" in previous:
+        entry["metrics"] = metrics if metrics is not None else previous.get("metrics")
+    _GENERATION_PROGRESS[project_id] = entry
 
 
 @router.get("/gemini/status")
@@ -204,30 +209,56 @@ def generation_progress(project_id: int, db: Session = Depends(get_db)):
             "stage": "Ready to generate",
             "elapsed_seconds": 0,
         }
-    return {
+    res = {
         "project_id": project_id,
         "status": state["status"],
         "progress": state["progress"],
         "stage": state["stage"],
         "elapsed_seconds": round(max(0, time.monotonic() - state["started_at"]), 1),
     }
+    if "metrics" in state:
+        res["metrics"] = state["metrics"]
+    return res
 
 
+@router.post("/projects/{project_id}/generate/cancel")
+async def cancel_generation(project_id: int, db: Session = Depends(get_db)):
+    """Cancel an active in-flight documentation generation request."""
+    event = _CANCEL_EVENTS.get(project_id)
+    if event:
+        event.set()
+    state = _GENERATION_PROGRESS.get(project_id)
+    if state and state.get("status") == "running":
+        _set_generation_progress(project_id, state.get("progress", 0), "Generation cancelled by user", "cancelled")
+    project = db.query(Project).filter_by(id=project_id).first()
+    if project:
+        prior_docs = db.query(DocumentationVersion).filter_by(project_id=project_id, status="GENERATING").all()
+        for doc in prior_docs:
+            doc.status = "CURRENT"
+        db.commit()
+    return {"status": "cancelled", "message": "Generation cancelled successfully."}
 
 
 @router.post("/projects/{project_id}/generate", response_model=GenerateResponse)
 async def generate_docs(project_id: int, doc_type: str = Query('README'), db: Session = Depends(get_db)):
     """
-    Module 3 & 4: Read source code and generate AI documentation.
-  """
+    Read source code and generate AI documentation with real streaming and progress.
+    """
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
+    # Guard against concurrent duplicate generation requests for the same project
+    curr_state = _GENERATION_PROGRESS.get(project_id, {})
+    if curr_state.get("status") == "running" and (time.monotonic() - curr_state.get("started_at", 0)) < settings.GEMINI_API_TIMEOUT:
+        raise HTTPException(status_code=409, detail="Documentation generation is already in progress for this project.")
 
     extract_dir = settings.UPLOADS_DIR / f"project_{project_id}" / "source"
     if not extract_dir.exists():
         raise HTTPException(status_code=400, detail="Source files not found. Re-upload the ZIP.")
+
+    cancel_event = asyncio.Event()
+    _CANCEL_EVENTS[project_id] = cancel_event
 
     _set_generation_progress(
         project_id,
@@ -235,12 +266,15 @@ async def generate_docs(project_id: int, doc_type: str = Query('README'), db: Se
         "Preparing source files",
         reset=True,
     )
-    progress_callback = lambda percent, stage: _set_generation_progress(project_id, percent, stage)
+    def progress_callback(percent: int, stage: str, metrics: dict[str, Any] | None = None) -> None:
+        _set_generation_progress(project_id, percent, stage, metrics=metrics)
 
     prior_docs = db.query(DocumentationVersion).filter_by(project_id=project.id).all()
     for old_doc in prior_docs:
-        if old_doc.status in ('CURRENT','OUTDATED','PARTIALLY_AFFECTED'): old_doc.status='GENERATING'
+        if old_doc.status in ('CURRENT','OUTDATED','PARTIALLY_AFFECTED'):
+            old_doc.status = 'GENERATING'
     db.commit()
+
     try:
         documentation = await generate_documentation(
             project_id=project.id,
@@ -249,11 +283,13 @@ async def generate_docs(project_id: int, doc_type: str = Query('README'), db: Se
             file_list=project.file_list or "",
             doc_type=doc_type,
             progress_callback=progress_callback,
+            cancel_event=cancel_event,
         )
 
         project.generated_documentation = documentation
         project.status = "completed"
-        for old_doc in prior_docs: old_doc.status='SUPERSEDED'
+        for old_doc in prior_docs:
+            old_doc.status = 'SUPERSEDED'
         latest = db.query(ProjectVersion).filter_by(project_id=project.id).order_by(ProjectVersion.created_at.desc()).first()
         db.add(DocumentationVersion(project_id=project.id, project_version_id=latest.id if latest else None, content=documentation, doc_type=doc_type, status='CURRENT'))
         db.commit()
@@ -278,22 +314,33 @@ async def generate_docs(project_id: int, doc_type: str = Query('README'), db: Se
             word_count=word_count,
             section_count=7,
         )
-
+    except asyncio.CancelledError:
+        _set_generation_progress(project_id, _GENERATION_PROGRESS.get(project_id, {}).get("progress", 0), "Generation cancelled by user", "cancelled")
+        project.status = "cancelled"
+        for old_doc in prior_docs:
+            old_doc.status = "CURRENT"
+        db.commit()
+        raise HTTPException(status_code=499, detail="Generation was cancelled.")
     except ValueError as e:
         _set_generation_progress(project_id, _GENERATION_PROGRESS.get(project_id, {}).get("progress", 5), "Generation failed: " + str(e), "failed")
         project.status = "failed"
-        for old_doc in prior_docs: old_doc.status='FAILED'
+        for old_doc in prior_docs:
+            old_doc.status = 'FAILED'
         db.commit()
         raise HTTPException(status_code=400, detail=str(e))
     except TimeoutError as e:
         _set_generation_progress(project_id, _GENERATION_PROGRESS.get(project_id, {}).get("progress", 5), "Generation timed out", "failed")
         project.status = "failed"
-        for old_doc in prior_docs: old_doc.status='FAILED'
+        for old_doc in prior_docs:
+            old_doc.status = 'FAILED'
         db.commit()
         raise HTTPException(status_code=504, detail=str(e))
     except ProviderError as e:
         _set_generation_progress(project_id, _GENERATION_PROGRESS.get(project_id, {}).get("progress", 5), "Gemini request failed: " + e.message, "failed")
-        project.status = "failed"; [setattr(d,'status','FAILED') for d in prior_docs]; db.commit()
+        project.status = "failed"
+        for d in prior_docs:
+            d.status = 'FAILED'
+        db.commit()
         raise HTTPException(
             status_code=503,
             detail={
@@ -303,10 +350,13 @@ async def generate_docs(project_id: int, doc_type: str = Query('README'), db: Se
                 "model": e.model,
             },
         )
-    except Exception:
+    except Exception as e:
         _set_generation_progress(project_id, _GENERATION_PROGRESS.get(project_id, {}).get("progress", 5), "Generation failed unexpectedly", "failed")
-        project.status = "failed"; db.commit()
-        raise HTTPException(status_code=500, detail="Generation failed safely. Please try again.")
+        project.status = "failed"
+        db.commit()
+        raise HTTPException(status_code=500, detail=f"Generation failed safely: {str(e)}")
+    finally:
+        _CANCEL_EVENTS.pop(project_id, None)
 
 
 # ---------- History ----------

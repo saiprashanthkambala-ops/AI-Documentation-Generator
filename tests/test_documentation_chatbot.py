@@ -258,3 +258,33 @@ def test_upload_limits_are_200_mb():
 
     assert settings.MAX_ZIP_SIZE_MB == 200
     assert settings.MAX_EXTRACTED_SIZE_MB == 200
+
+
+def test_extract_json_conversational_plain_text():
+    from backend.services.documentation_assistant import _extract_json
+
+    raw = "This is a detailed explanation of the project architecture and features."
+    result = _extract_json(raw)
+    assert result is not None
+    assert result["operation"] == "NO_CHANGE"
+    assert "detailed explanation" in result["reply"]
+
+
+def test_extract_json_markdown_fenced():
+    from backend.services.documentation_assistant import _extract_json
+
+    raw = '```json\n{"reply": "Added section", "operation": "APPEND", "summary": "Appended", "target": "", "replacement": "## New Section"}\n```'
+    result = _extract_json(raw)
+    assert result is not None
+    assert result["operation"] == "APPEND"
+    assert result["replacement"] == "## New Section"
+
+
+def test_extract_json_embedded_in_text():
+    from backend.services.documentation_assistant import _extract_json
+
+    raw = 'Here is the proposal:\n{"reply": "Done", "operation": "NO_CHANGE", "summary": "None", "target": "", "replacement": ""}\nHope this helps!'
+    result = _extract_json(raw)
+    assert result is not None
+    assert result["operation"] == "NO_CHANGE"
+

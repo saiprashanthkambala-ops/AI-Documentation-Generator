@@ -104,8 +104,12 @@ async function handleGenerate() {
     if (!uploadedProjectId) return;
 
     const controller = new AbortController();
-    showLoading("Generating documentation with Gemini...", {
-        onCancel: () => controller.abort()
+    showLoading("Generating Documentation with Gemini", {
+        onCancel: () => {
+            controller.abort();
+            fetch(`/api/projects/${uploadedProjectId}/generate/cancel`, { method: "POST" }).catch(() => {});
+        },
+        progressUrl: `/api/projects/${uploadedProjectId}/generate/progress`
     });
 
     try {
@@ -115,12 +119,14 @@ async function handleGenerate() {
             signal: controller.signal
         });
 
+        updateLoadingProgress(100, "Generation completed");
+        await new Promise(resolve => setTimeout(resolve, 350));
         showToast(result.message || "Documentation generated!");
         window.location.href = `/documentation?id=${uploadedProjectId}`;
 
     } catch (err) {
-        if (err?.name === "AbortError") {
-            showToast("Documentation generation stopped.", "error");
+        if (err?.name === "AbortError" || err?.message?.includes("cancelled")) {
+            showToast("Documentation generation was cancelled.", "info");
         } else {
             showToast(err.message, "error");
         }

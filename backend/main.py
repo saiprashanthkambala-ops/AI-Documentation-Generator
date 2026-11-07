@@ -8,7 +8,14 @@ from backend.config import ensure_directories,settings
 from backend.database.db import init_db
 from backend.routes import projects, documentation_chat
 @asynccontextmanager
-async def lifespan(app): ensure_directories(); init_db(); yield
+async def lifespan(app):
+    ensure_directories()
+    init_db()
+    try:
+        yield
+    finally:
+        from backend.services.gemini_service import close_shared_client
+        await close_shared_client()
 app=FastAPI(title=settings.APP_NAME,version=settings.APP_VERSION,description='Evidence-based documentation generation and maintenance assistant.',lifespan=lifespan)
 app.add_middleware(CORSMiddleware,allow_origins=[x.strip() for x in settings.CORS_ORIGINS.split(',') if x.strip()],allow_credentials=True,allow_methods=['GET','POST','DELETE'],allow_headers=['*'])
 app.include_router(projects.router)

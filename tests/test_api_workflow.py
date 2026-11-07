@@ -1,6 +1,7 @@
 import io, zipfile
 from fastapi.testclient import TestClient
 from backend.main import app
+import backend.services.doc_generator as generator
 
 def archive(files):
  b=io.BytesIO()
@@ -60,3 +61,21 @@ def test_generation_progress_endpoint_reports_completed(monkeypatch):
   assert after.json()["status"] == "completed"
   assert after.json()["progress"] == 100
   assert after.json()["elapsed_seconds"] >= 0
+  assert "metrics" in after.json()
+  assert "source_scan_ms" in after.json()["metrics"]
+  assert "total_duration_ms" in after.json()["metrics"]
+
+
+def test_generation_cancel_endpoint():
+    with TestClient(app) as c:
+        upload = c.post(
+            "/api/upload",
+            data={"name": "cancel-test"},
+            files={"zip_file": ("cancel.zip", archive({"main.py": "print('cancel')"}), "application/zip")},
+        )
+        assert upload.status_code == 200
+        project_id = upload.json()["id"]
+
+        cancel_resp = c.post(f"/api/projects/{project_id}/generate/cancel")
+        assert cancel_resp.status_code == 200
+        assert cancel_resp.json()["status"] == "cancelled"

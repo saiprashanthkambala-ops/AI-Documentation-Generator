@@ -201,15 +201,34 @@ function renderChatMessage(message) {
         "</div>";
 }
 
+let isChatSubmitting = false;
+
 async function sendChat() {
+    if (isChatSubmitting) return;
     const input = document.getElementById("chatInput");
     const button = document.getElementById("sendChatBtn");
     const thinking = document.getElementById("chatThinking");
+    const container = document.getElementById("chatMessages");
     const message = input.value.trim();
     if (!message || !currentProjectId || button.disabled) return;
 
-    input.value = "";
+    isChatSubmitting = true;
     button.disabled = true;
+    input.value = "";
+    input.disabled = true;
+
+    // Immediately render user's message in the conversation
+    if (container) {
+        const userMsgEl = document.createElement("div");
+        userMsgEl.className = "chat-message user";
+        userMsgEl.innerHTML =
+            '<div class="chat-role">You</div>' +
+            '<div class="chat-bubble">' + escapeHtml(message) + '</div>' +
+            '<div class="chat-time">Just now</div>';
+        container.appendChild(userMsgEl);
+        container.scrollTop = container.scrollHeight;
+    }
+
     if (thinking) thinking.hidden = false;
 
     try {
@@ -224,8 +243,11 @@ async function sendChat() {
         appendChatError("I couldn't complete that response: " + err.message);
         showToast(err.message, "error");
     } finally {
+        isChatSubmitting = false;
         button.disabled = false;
+        input.disabled = false;
         if (thinking) thinking.hidden = true;
+        input.focus();
     }
 }
 
@@ -327,8 +349,11 @@ function updateRevisionButtons(workspace) {
 
 async function generateNow(projectId) {
     const controller = new AbortController();
-    showLoading("Generating documentation with Gemini...", {
-        onCancel: () => controller.abort(),
+    showLoading("Generating Documentation with Gemini", {
+        onCancel: () => {
+            controller.abort();
+            fetch(API_BASE + "/api/projects/" + projectId + "/generate/cancel", { method: "POST" }).catch(() => {});
+        },
         progressUrl: "/api/projects/" + projectId + "/generate/progress"
     });
 
@@ -337,13 +362,13 @@ async function generateNow(projectId) {
             method: "POST",
             signal: controller.signal
         });
-        updateLoadingProgress(100, "Documentation generated successfully");
-        await new Promise(resolve => setTimeout(resolve, 250));
+        updateLoadingProgress(100, "Generation completed");
+        await new Promise(resolve => setTimeout(resolve, 350));
         showToast(result.message || "Documentation generated!");
         await loadDocumentation(projectId);
     } catch (err) {
-        if (err?.name === "AbortError") {
-            showToast("Documentation generation stopped.", "error");
+        if (err?.name === "AbortError" || err?.message?.includes("cancelled")) {
+            showToast("Documentation generation was cancelled.", "info");
         } else {
             showToast(err.message, "error");
         }

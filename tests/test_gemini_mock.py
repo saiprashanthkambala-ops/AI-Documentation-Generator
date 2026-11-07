@@ -156,3 +156,80 @@ def test_gemini_connection_error_retries(monkeypatch):
     monkeypatch.setattr(gemini_service.httpx, "AsyncClient", ConnectOnce)
     assert "Network retry succeeded" in asyncio.run(gemini_service.generate("x"))
     assert ConnectOnce.calls == 2
+
+
+def test_gemini_rate_limit_error(monkeypatch):
+    class RateLimited(FakeClient):
+        async def post(self, *a, **kw):
+            return httpx.Response(429, json={"error": {"message": "Resource exhausted"}})
+
+    monkeypatch.setattr(gemini_service.settings, "GEMINI_API_KEY", "x")
+    monkeypatch.setattr(gemini_service.settings, "GEMINI_FALLBACK_MODEL", "")
+    monkeypatch.setattr(gemini_service.httpx, "AsyncClient", RateLimited)
+    with pytest.raises(gemini_service.ProviderError) as exc:
+        asyncio.run(gemini_service.generate("x"))
+    assert exc.value.code == "AI_RATE_LIMITED"
+    assert exc.value.status_code == 429
+
+
+def test_gemini_streaming_sse_success(monkeypatch):
+    class FakeStreamResponse:
+        status_code = 200
+        headers = {}
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            pass
+
+        async def aiter_lines(self):
+            yield "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"# Streaming Documentation\\n\"}]}}]}"
+            yield ""
+            yield "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"Evidence-backed content from Gemini.\"}]}}]}"
+            yield "data: [DONE]"
+
+    class StreamingClient(FakeClient):
+        def stream(self, method, url, **kw):
+            return FakeStreamResponse()
+
+    received_chunks = []
+    def on_chunk(text):
+        received_chunks.append(text)
+
+    monkeypatch.setattr(gemini_service.settings, "GEMINI_API_KEY", "test-key")
+    monkeypatch.setattr(gemini_service.httpx, "AsyncClient", StreamingClient)
+    text, metrics = asyncio.run(gemini_service.stream_generate("prompt", on_chunk=on_chunk))
+    assert "# Streaming Documentation" in text
+    assert len(received_chunks) == 2
+    assert metrics["chars"] > 20
+    assert metrics["ttft_ms"] >= 0
+
+
+def test_gemini_streaming_cancellation(monkeypatch):
+    class HangingStreamResponse:
+        status_code = 200
+        headers = {}
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            pass
+
+        async def aiter_lines(self):
+            yield "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"First chunk\"}]}}]}"
+            # Will be cancelled here
+
+    class HangingClient(FakeClient):
+        def stream(self, method, url, **kw):
+            return HangingStreamResponse()
+
+    cancel_event = asyncio.Event()
+    cancel_event.set()
+
+    monkeypatch.setattr(gemini_service.settings, "GEMINI_API_KEY", "test-key")
+    monkeypatch.setattr(gemini_service.httpx, "AsyncClient", HangingClient)
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(gemini_service.stream_generate("prompt", cancel_event=cancel_event))
+

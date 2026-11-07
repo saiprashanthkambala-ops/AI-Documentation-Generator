@@ -47,12 +47,19 @@ async function apiRequest(url, options = {}) {
     return parseJsonResponse(response);
 }
 
+function formatElapsedTime(totalSeconds) {
+    const s = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+    const mins = Math.floor(s / 60);
+    const secs = String(s % 60).padStart(2, "0");
+    return String(mins).padStart(2, "0") + ":" + secs;
+}
+
 function showLoading(message = "Please wait...", options = {}) {
     hideLoading();
     activeLoadingCancel = typeof options.onCancel === "function" ? options.onCancel : null;
     loadingStartedAt = Date.now();
-    loadingPercent = 4;
-    loadingStage = "Preparing your project...";
+    loadingPercent = 0;
+    loadingStage = "Preparing project...";
 
     const el = document.createElement("div");
     el.className = "loading-overlay";
@@ -75,16 +82,16 @@ function showLoading(message = "Please wait...", options = {}) {
             closeButton +
             '<div class="loading-progress-heading">' +
                 '<p class="fw-semibold mb-0" id="loadingMessage">' + safeMessage + '</p>' +
-                '<strong id="loadingPercent">4%</strong>' +
+                '<strong id="loadingPercent">0%</strong>' +
             '</div>' +
-            '<div class="loading-progress-track" role="progressbar" aria-label="Estimated generation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="4">' +
-                '<div class="loading-progress-fill" id="loadingProgressBar" style="width:4%"></div>' +
+            '<div class="loading-progress-track" role="progressbar" aria-label="Estimated progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">' +
+                '<div class="loading-progress-fill" id="loadingProgressBar" style="width:0%"></div>' +
             '</div>' +
             '<div class="loading-progress-details">' +
-                '<span id="loadingStage">' + loadingStage + '</span>' +
-                '<span id="loadingElapsed">Elapsed 0s</span>' +
+                '<span>Current stage: <strong id="loadingStage" class="fw-medium">' + loadingStage + '</strong></span>' +
+                '<span>Elapsed time: <strong id="loadingElapsed" class="fw-medium">00:00</strong></span>' +
             '</div>' +
-            '<small class="loading-progress-note">Progress is estimated while Gemini is drafting. The timer shows actual elapsed time.</small>' +
+            '<small class="loading-progress-note">Estimated progress while Gemini is drafting. The timer shows actual elapsed time.</small>' +
             cancelNote +
         '</div>';
     document.body.appendChild(el);
@@ -92,18 +99,15 @@ function showLoading(message = "Please wait...", options = {}) {
     document.getElementById("loadingCancelBtn")?.addEventListener("click", cancelLoading);
 
     const updateElapsed = () => {
-        const seconds = Math.max(0, Math.floor((Date.now() - loadingStartedAt) / 1000));
-        const minutes = Math.floor(seconds / 60);
-        const remainder = String(seconds % 60).padStart(2, "0");
-        const label = minutes ? minutes + ":" + remainder : seconds + "s";
+        const seconds = Math.max(0, (Date.now() - loadingStartedAt) / 1000);
         const timer = document.getElementById("loadingElapsed");
-        if (timer) timer.textContent = "Elapsed " + label;
+        if (timer) timer.textContent = formatElapsedTime(seconds);
 
-        // Smooth, explicitly estimated movement while the non-streaming Gemini
-        // request is in flight. The bar never claims completion before the API does.
-        const estimate = Math.min(88, 18 + seconds * 4);
-        if (loadingPercent < estimate) {
-            updateLoadingProgress(estimate, loadingStage || "Gemini is drafting your documentation...");
+        // Smoothly interpolate estimated progress while generation request is in flight
+        // without ever claiming completion before the server finishes.
+        const estimate = Math.min(88, Math.floor(15 + seconds * 3.5));
+        if (loadingPercent < estimate && loadingPercent < 88) {
+            updateLoadingProgress(estimate, loadingStage || "Gemini is generating documentation...");
         }
     };
     loadingTimer = window.setInterval(updateElapsed, 500);
@@ -120,19 +124,31 @@ function showLoading(message = "Please wait...", options = {}) {
                         Math.max(loadingPercent, Math.min(92, Number(progress.progress) || 0)),
                         progress.stage || loadingStage
                     );
+                    if (typeof progress.elapsed_seconds === "number") {
+                        const timer = document.getElementById("loadingElapsed");
+                        if (timer) timer.textContent = formatElapsedTime(progress.elapsed_seconds);
+                    }
                 } else if (progress.status === "completed") {
-                    updateLoadingProgress(100, progress.stage || "Documentation ready");
-                } else if (progress.status === "failed") {
-                    loadingStage = progress.stage || "Generation failed";
+                    updateLoadingProgress(100, progress.stage || "Generation completed");
+                    if (progress.elapsed_seconds) {
+                        const timer = document.getElementById("loadingElapsed");
+                        if (timer) timer.textContent = formatElapsedTime(progress.elapsed_seconds);
+                    }
+                    if (loadingTimer) window.clearInterval(loadingTimer);
+                    if (loadingProgressPoller) window.clearInterval(loadingProgressPoller);
+                } else if (progress.status === "failed" || progress.status === "cancelled") {
+                    loadingStage = progress.stage || (progress.status === "cancelled" ? "Cancelled" : "Generation failed");
                     const stage = document.getElementById("loadingStage");
                     if (stage) stage.textContent = loadingStage;
+                    if (loadingTimer) window.clearInterval(loadingTimer);
+                    if (loadingProgressPoller) window.clearInterval(loadingProgressPoller);
                 }
             } catch (_) {
                 // Progress polling is supplementary; the main generation request owns errors.
             }
         };
         pollProgress();
-        loadingProgressPoller = window.setInterval(pollProgress, 900);
+        loadingProgressPoller = window.setInterval(pollProgress, 500);
     }
 }
 
