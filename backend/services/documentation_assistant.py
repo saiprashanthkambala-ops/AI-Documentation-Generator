@@ -129,7 +129,7 @@ async def propose_change(
     prompt = (
         f"PROJECT: {project_name}\n\n"
         "CURRENT DOCUMENTATION:\n"
-        f"{_clip(current_document, min(settings.MAX_CONTEXT_CHARS, 24000))}\n\n"
+        f"{_clip(current_document, settings.MAX_CONTEXT_CHARS)}\n\n"
         "SOURCE FILE TREE (trimmed for fast editing requests):\n"
         f"{_clip(tree, 8000)}\n\n"
         "SOURCE EVIDENCE (relevant excerpts only):\n"
