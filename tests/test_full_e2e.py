@@ -8,7 +8,7 @@ def archive(files):
  with zipfile.ZipFile(b,'w') as z:
   for path,text in files.items(): z.writestr(path,text)
  b.seek(0); return b
-async def fake_generate(prompt,system=''):
+async def fake_generate(prompt,system='',**kwargs):
  return '# Evidence-backed documentation\n\nThis proposal is based only on supplied project evidence and is sufficiently detailed for validation.\n\n## Setup\nVerified from source evidence.'
 def test_complete_mocked_maintenance_approve_and_reject(monkeypatch):
  monkeypatch.setattr(generator,'generate',fake_generate)
