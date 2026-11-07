@@ -108,7 +108,7 @@ def _clip(text: str, limit: int) -> str:
 
 def _conversation_text(messages: list[dict[str, Any]]) -> str:
     lines: list[str] = []
-    for item in messages[-12:]:
+    for item in messages[-8:]:
         lines.append(
             f"{str(item.get('role', 'user')).upper()}: {item.get('content', '').strip()}"
         )
@@ -129,11 +129,11 @@ async def propose_change(
     prompt = (
         f"PROJECT: {project_name}\n\n"
         "CURRENT DOCUMENTATION:\n"
-        f"{_clip(current_document, settings.MAX_CONTEXT_CHARS)}\n\n"
-        "SOURCE FILE TREE:\n"
-        f"{_clip(tree, 12000)}\n\n"
-        "SOURCE EVIDENCE:\n"
-        f"{_clip(source, 18000)}\n\n"
+        f"{_clip(current_document, min(settings.MAX_CONTEXT_CHARS, 24000))}\n\n"
+        "SOURCE FILE TREE (trimmed for fast editing requests):\n"
+        f"{_clip(tree, 8000)}\n\n"
+        "SOURCE EVIDENCE (relevant excerpts only):\n"
+        f"{_clip(source, 12000)}\n\n"
         "RECENT CHAT:\n"
         f"{_conversation_text(conversation)}\n\n"
         "Prepare the best safe response to the latest user message. If the latest message is a short follow-up, use the recent chat context to resolve what it refers to."
