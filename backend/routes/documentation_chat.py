@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -36,6 +37,7 @@ from backend.services.gemini_service import ProviderError
 
 
 router = APIRouter(prefix="/api/projects", tags=["Documentation Assistant"])
+logger = logging.getLogger(__name__)
 
 
 def _project(project_id: int, db: Session) -> Project:
@@ -143,6 +145,16 @@ async def chat(project_id: int, payload: ChatRequest, db: Session = Depends(get_
             "reply": assistant_text,
             "operation": "NO_CHANGE",
             "summary": "No change proposed.",
+            "target": "",
+            "replacement": "",
+        }
+    except Exception:
+        logger.exception("Unexpected documentation chat failure for project %s", project.id)
+        assistant_text = "I hit an unexpected server error while preparing a response. Your document was not changed. Please try again; if it continues, check the server logs."
+        proposal = {
+            "reply": assistant_text,
+            "operation": "NO_CHANGE",
+            "summary": "No change proposed because the request could not be completed.",
             "target": "",
             "replacement": "",
         }

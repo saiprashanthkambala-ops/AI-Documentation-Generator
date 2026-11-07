@@ -203,7 +203,11 @@ async def generate(
 
     last_error: ProviderError | None = None
 
-    async with httpx.AsyncClient(timeout=settings.GEMINI_API_TIMEOUT) as client:
+    timeout = httpx.Timeout(
+        settings.GEMINI_API_TIMEOUT,
+        connect=min(10.0, settings.GEMINI_API_TIMEOUT),
+    )
+    async with httpx.AsyncClient(timeout=timeout) as client:
         for model_index, model in enumerate(models):
             attempts = max(1, int(settings.GEMINI_MAX_RETRIES))
             for attempt in range(attempts):
@@ -223,6 +227,25 @@ async def generate(
                             model,
                         )
                     return result
+                except httpx.RequestError as exc:
+                    # DNS, connection, TLS and timeout failures must follow the
+                    # same retry/fallback path as transient HTTP status codes.
+                    reason = "timed out" if isinstance(exc, httpx.TimeoutException) else "could not connect"
+                    last_error = ProviderError(
+                        "AI_TRANSIENT_ERROR",
+                        f"Gemini request {reason}. Check the network connection and try again.",
+                        None,
+                        model,
+                    )
+                    if attempt + 1 < attempts:
+                        await _backoff(attempt)
+                    else:
+                        logger.warning(
+                            "Gemini model %s exhausted %s network attempts (%s).",
+                            model,
+                            attempts,
+                            type(exc).__name__,
+                        )
                 except ProviderError as exc:
                     last_error = exc
                     if exc.code != "AI_TRANSIENT_ERROR":

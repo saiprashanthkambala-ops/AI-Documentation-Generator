@@ -4,6 +4,11 @@
 
 const API_BASE = "";
 let activeLoadingCancel = null;
+let loadingTimer = null;
+let loadingProgressPoller = null;
+let loadingStartedAt = 0;
+let loadingPercent = 0;
+let loadingStage = "Preparing your project...";
 
 async function parseJsonResponse(response) {
     const text = await response.text();
@@ -45,6 +50,9 @@ async function apiRequest(url, options = {}) {
 function showLoading(message = "Please wait...", options = {}) {
     hideLoading();
     activeLoadingCancel = typeof options.onCancel === "function" ? options.onCancel : null;
+    loadingStartedAt = Date.now();
+    loadingPercent = 4;
+    loadingStage = "Preparing your project...";
 
     const el = document.createElement("div");
     el.className = "loading-overlay";
@@ -55,26 +63,92 @@ function showLoading(message = "Please wait...", options = {}) {
               '<i class="bi bi-x-lg" aria-hidden="true"></i>' +
           '</button>'
         : "";
-
     const cancelNote = activeLoadingCancel
         ? '<div class="loading-cancel-note">You can stop this operation at any time.</div>'
         : "";
-
-    const subtitle = String(message).toLowerCase().includes("uploading")
-        ? "Preparing and extracting your project..."
-        : "Gemini may take a moment to respond";
+    const safeMessage = String(message).replace(/[&<>"']/g, character => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[character]);
 
     el.innerHTML =
         '<div class="loading-box loading-dialog">' +
             closeButton +
-            '<div class="spinner-border text-primary mb-3"></div>' +
-            '<p class="fw-semibold mb-1">' + message + '</p>' +
-            '<small class="text-muted">' + subtitle + '</small>' +
+            '<div class="loading-progress-heading">' +
+                '<p class="fw-semibold mb-0" id="loadingMessage">' + safeMessage + '</p>' +
+                '<strong id="loadingPercent">4%</strong>' +
+            '</div>' +
+            '<div class="loading-progress-track" role="progressbar" aria-label="Estimated generation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="4">' +
+                '<div class="loading-progress-fill" id="loadingProgressBar" style="width:4%"></div>' +
+            '</div>' +
+            '<div class="loading-progress-details">' +
+                '<span id="loadingStage">' + loadingStage + '</span>' +
+                '<span id="loadingElapsed">Elapsed 0s</span>' +
+            '</div>' +
+            '<small class="loading-progress-note">Progress is estimated while Gemini is drafting. The timer shows actual elapsed time.</small>' +
             cancelNote +
         '</div>';
     document.body.appendChild(el);
 
     document.getElementById("loadingCancelBtn")?.addEventListener("click", cancelLoading);
+
+    const updateElapsed = () => {
+        const seconds = Math.max(0, Math.floor((Date.now() - loadingStartedAt) / 1000));
+        const minutes = Math.floor(seconds / 60);
+        const remainder = String(seconds % 60).padStart(2, "0");
+        const label = minutes ? minutes + ":" + remainder : seconds + "s";
+        const timer = document.getElementById("loadingElapsed");
+        if (timer) timer.textContent = "Elapsed " + label;
+
+        // Smooth, explicitly estimated movement while the non-streaming Gemini
+        // request is in flight. The bar never claims completion before the API does.
+        const estimate = Math.min(88, 18 + seconds * 4);
+        if (loadingPercent < estimate) {
+            updateLoadingProgress(estimate, loadingStage || "Gemini is drafting your documentation...");
+        }
+    };
+    loadingTimer = window.setInterval(updateElapsed, 500);
+    updateElapsed();
+
+    if (options.progressUrl) {
+        const pollProgress = async () => {
+            try {
+                const response = await fetch(API_BASE + options.progressUrl, { cache: "no-store" });
+                if (!response.ok) return;
+                const progress = await response.json();
+                if (progress.status === "running") {
+                    updateLoadingProgress(
+                        Math.max(loadingPercent, Math.min(92, Number(progress.progress) || 0)),
+                        progress.stage || loadingStage
+                    );
+                } else if (progress.status === "completed") {
+                    updateLoadingProgress(100, progress.stage || "Documentation ready");
+                } else if (progress.status === "failed") {
+                    loadingStage = progress.stage || "Generation failed";
+                    const stage = document.getElementById("loadingStage");
+                    if (stage) stage.textContent = loadingStage;
+                }
+            } catch (_) {
+                // Progress polling is supplementary; the main generation request owns errors.
+            }
+        };
+        pollProgress();
+        loadingProgressPoller = window.setInterval(pollProgress, 900);
+    }
+}
+
+function updateLoadingProgress(percent, stage) {
+    const bounded = Math.max(0, Math.min(100, Number(percent) || 0));
+    loadingPercent = Math.max(loadingPercent, bounded);
+    if (stage) loadingStage = String(stage);
+
+    const label = document.getElementById("loadingPercent");
+    const bar = document.getElementById("loadingProgressBar");
+    const track = bar?.parentElement;
+    const stageLabel = document.getElementById("loadingStage");
+    if (label) label.textContent = Math.round(loadingPercent) + "%";
+    if (bar) bar.style.width = loadingPercent + "%";
+    if (track) track.setAttribute("aria-valuenow", String(Math.round(loadingPercent)));
+    if (stageLabel) stageLabel.textContent = loadingStage;
 }
 
 function cancelLoading() {
@@ -88,6 +162,10 @@ function cancelLoading() {
 
 function hideLoading() {
     activeLoadingCancel = null;
+    if (loadingTimer) window.clearInterval(loadingTimer);
+    if (loadingProgressPoller) window.clearInterval(loadingProgressPoller);
+    loadingTimer = null;
+    loadingProgressPoller = null;
     document.getElementById("loadingOverlay")?.remove();
 }
 

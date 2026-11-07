@@ -53,10 +53,13 @@ async def generate_documentation(
     extract_dir,
     file_list="",
     doc_type="README",
+    progress_callback=None,
 ):
     if doc_type not in SUPPORTED_TYPES:
         raise ValueError("Unsupported documentation type.")
 
+    if progress_callback:
+        progress_callback(10, "Scanning project files")
     source = read_source_files(extract_dir)
     if not source.strip():
         raise ValueError("No readable source files found.")
@@ -64,6 +67,8 @@ async def generate_documentation(
     stats = get_project_stats(extract_dir)
     tree = get_file_tree(extract_dir)
     compact_source = _clip_source(source)
+    if progress_callback:
+        progress_callback(20, "Preparing project evidence and architecture context")
 
     prompt = (
         f"Create {doc_type} documentation for {project_name}. "
@@ -74,6 +79,9 @@ async def generate_documentation(
         f"Source evidence:\n{compact_source}"
     )
 
+    if progress_callback:
+        progress_callback(30, "Gemini is drafting your documentation")
+
     result = validate_document(
         await generate(
             prompt,
@@ -83,10 +91,15 @@ async def generate_documentation(
         )
     )
 
+    if progress_callback:
+        progress_callback(92, "Formatting and validating the generated document")
+
     doc = (
         f"# {project_name} — {doc_type}\n\n"
         f"> Generated {datetime.utcnow():%Y-%m-%d %H:%M UTC}; {stats['file_count']} files.\n\n"
         f"{result}\n"
     )
     save_doc_to_disk(project_id, project_name, doc)
+    if progress_callback:
+        progress_callback(97, "Saving documentation and revisions")
     return doc

@@ -2537,3 +2537,74 @@ body[data-theme="dark"] .profile-card-header h1 {
     color: #ffffff !important;
     text-shadow: 0 1px 8px rgba(0, 0, 0, .18);
 }
+
+
+/* Live generation progress and elapsed timer. */
+.loading-box.loading-dialog {
+    width: min(92vw, 520px);
+    min-width: 0;
+    padding: 2rem 2rem 1.5rem;
+}
+.loading-progress-heading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .8rem;
+    padding: 0 1.8rem .35rem;
+}
+.loading-progress-heading p {
+    font-size: 1rem;
+    line-height: 1.4;
+}
+.loading-progress-heading strong {
+    color: var(--primary-soft);
+    font-size: 1.2rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.loading-progress-track {
+    height: 12px;
+    width: 100%;
+    overflow: hidden;
+    margin: 1rem 0 .75rem;
+    border-radius: 999px;
+    background: rgba(127, 150, 190, .18);
+    border: 1px solid var(--glass-border);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,.18);
+}
+.loading-progress-fill {
+    height: 100%;
+    width: 0;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #526ff2, #8b9dff, #63c7ef);
+    box-shadow: 0 0 18px rgba(104, 133, 255, .48);
+    transition: width .45s ease;
+}
+.loading-progress-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: .8rem;
+    color: var(--text-muted);
+    font-size: .78rem;
+    font-variant-numeric: tabular-nums;
+}
+.loading-progress-note {
+    display: block;
+    margin-top: .65rem;
+    color: var(--text-muted);
+    font-size: .72rem;
+    line-height: 1.45;
+}
+.chat-error .chat-bubble {
+    border-color: rgba(239, 127, 145, .35);
+    background: rgba(239, 127, 145, .08);
+}
+@media (max-width: 520px) {
+    .loading-progress-heading {
+        padding: 0 1.7rem 0 .25rem;
+    }
+    .loading-progress-heading p {
+        font-size: .9rem;
+    }
+}

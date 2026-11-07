@@ -132,3 +132,27 @@ def test_gemini_empty(monkeypatch):
     with pytest.raises(gemini_service.ProviderError) as exc:
         asyncio.run(gemini_service.generate("x"))
     assert exc.value.code == "AI_EMPTY_RESPONSE"
+
+
+
+def test_gemini_connection_error_retries(monkeypatch):
+    _fast_retry(monkeypatch)
+
+    class ConnectOnce(FakeClient):
+        calls = 0
+
+        async def post(self, *a, **kw):
+            ConnectOnce.calls += 1
+            if ConnectOnce.calls == 1:
+                raise httpx.ConnectError("temporary network failure")
+            return httpx.Response(
+                200,
+                json={"candidates": [{"content": {"parts": [{"text": "# Network retry succeeded."}]}}]},
+            )
+
+    monkeypatch.setattr(gemini_service.settings, "GEMINI_API_KEY", "x")
+    monkeypatch.setattr(gemini_service.settings, "GEMINI_FALLBACK_MODEL", "")
+    monkeypatch.setattr(gemini_service.settings, "GEMINI_MAX_RETRIES", 2)
+    monkeypatch.setattr(gemini_service.httpx, "AsyncClient", ConnectOnce)
+    assert "Network retry succeeded" in asyncio.run(gemini_service.generate("x"))
+    assert ConnectOnce.calls == 2

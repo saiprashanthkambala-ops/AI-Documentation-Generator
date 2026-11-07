@@ -35,3 +35,28 @@ def test_reject_keeps_document_history():
   r=c.post('/api/upload',data={'name':'reject-test'},files={'zip_file':('x.zip',archive({'main.py':'x=1'}),'application/zip')}); pid=r.json()['id']
   # no docs means a decision cannot mutate unrelated data
   assert c.post(f'/api/projects/{pid}/documentation/999/decision?decision=reject').status_code==400
+
+
+
+def test_generation_progress_endpoint_reports_completed(monkeypatch):
+ async def fake_generate(prompt, system="", **kwargs):
+  return "# Generated documentation\n\nThis response is based on verified project evidence and contains enough detail for a project README.\n"
+ monkeypatch.setattr(generator, "generate", fake_generate)
+ with TestClient(app) as c:
+  upload = c.post(
+   "/api/upload",
+   data={"name": "progress-test"},
+   files={"zip_file": ("progress.zip", archive({"main.py": "print('ready')"}), "application/zip")},
+  )
+  assert upload.status_code == 200
+  project_id = upload.json()["id"]
+  before = c.get(f"/api/projects/{project_id}/generate/progress")
+  assert before.status_code == 200
+  assert before.json()["status"] == "idle"
+  generated = c.post(f"/api/projects/{project_id}/generate")
+  assert generated.status_code == 200
+  after = c.get(f"/api/projects/{project_id}/generate/progress")
+  assert after.status_code == 200
+  assert after.json()["status"] == "completed"
+  assert after.json()["progress"] == 100
+  assert after.json()["elapsed_seconds"] >= 0

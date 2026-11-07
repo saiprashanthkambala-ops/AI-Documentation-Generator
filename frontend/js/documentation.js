@@ -221,11 +221,28 @@ async function sendChat() {
         await loadWorkspace();
     } catch (err) {
         input.value = message;
+        appendChatError("I couldn't complete that response: " + err.message);
         showToast(err.message, "error");
     } finally {
         button.disabled = false;
         if (thinking) thinking.hidden = true;
     }
+}
+
+function appendChatError(message) {
+    const container = document.getElementById("chatMessages");
+    if (!container) return;
+    const item = document.createElement("div");
+    item.className = "chat-message assistant chat-error";
+    const role = document.createElement("div");
+    role.className = "chat-role";
+    role.textContent = "Assistant · Unable to respond";
+    const bubble = document.createElement("div");
+    bubble.className = "chat-bubble";
+    bubble.textContent = String(message || "The assistant could not complete this request. Please try again.");
+    item.append(role, bubble);
+    container.appendChild(item);
+    container.scrollTop = container.scrollHeight;
 }
 
 function findChatMessage(messageId) {
@@ -311,7 +328,8 @@ function updateRevisionButtons(workspace) {
 async function generateNow(projectId) {
     const controller = new AbortController();
     showLoading("Generating documentation with Gemini...", {
-        onCancel: () => controller.abort()
+        onCancel: () => controller.abort(),
+        progressUrl: "/api/projects/" + projectId + "/generate/progress"
     });
 
     try {
@@ -319,6 +337,8 @@ async function generateNow(projectId) {
             method: "POST",
             signal: controller.signal
         });
+        updateLoadingProgress(100, "Documentation generated successfully");
+        await new Promise(resolve => setTimeout(resolve, 250));
         showToast(result.message || "Documentation generated!");
         await loadDocumentation(projectId);
     } catch (err) {
