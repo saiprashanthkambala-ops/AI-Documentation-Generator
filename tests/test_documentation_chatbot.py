@@ -201,6 +201,11 @@ def test_ui_contract_has_cancellable_generation_and_chat_thinking_state():
     assert "controller.abort()" in documentation
     assert "chatThinking" in documentation
     assert "loadingCancelBtn" in api
+    assert "loadingProgressBar" in api
+    assert "loadingPercent" in api
+    assert "loadingElapsed" in api
+    assert "progressUrl" in documentation
+    assert "Estimated progress" in api
     assert "Generated Files" in page
 
 
